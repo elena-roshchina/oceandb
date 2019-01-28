@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Загрузка данных{% endblock title %}
+{% block header %}Загрузка файлов ARGO в формате netCDF{% endblock header %}
+{% block content%}
+    <h3>Выбрать файл:</h3>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <table>
+            <tr><td>
+                <table>
+                    {{ form }}
+                </table>
+            </td>
+                <td>
+                   <input type="submit" value="Send" >
+                </td></tr>
+        </table>
+    </form>
+    <p>
+    {{ filename }}{{ message }}
+    </p>
+    <hr width="700px" align="left">
+    <h3>Log:</h3>
+    {% if log.count > 0 %}
+    <p>{{ log.count }} последних загрузок:</p>
+    <table cellpadding="5px">
+        <tr><th>Id</th><th>Момент</th><th>Файл</th><th>Комментарий</th></tr>
+        {% for record in log %}
+        <tr>
+            <td>{{ record.id }}</td>
+            <td>{{ record.moment_stamp }}</td>
+            <td>{{ record.file_name }}</td>
+            <td>{{ record.message }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+{% endblock content %}
