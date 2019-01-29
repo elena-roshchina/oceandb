@@ -92,6 +92,7 @@ def density(sal, temp, pressure):
     return density_s_t_0 / (1 - pressure / bulk_modulus(sal=sal, t=temp, press=pressure))
 
 
+"""
 salinity = [0, 35]
 temperature = [5, 25]
 pressure = [0, 1000]
@@ -101,6 +102,7 @@ for i in range(2):
     for j in range(2):
         for k in range(2):
             print("%3d" % salinity[i],
-                  "%3d" % temperature[j],
-                  "%5d" % pressure[k],
-                  "%.3f" % density(salinity[i], temperature[j], pressure[k]))
+                  "%5d" % temperature[j],
+                  "%6d" % pressure[k],
+                  "%9.3f" % density(salinity[i], temperature[j], pressure[k]))
+"""

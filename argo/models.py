@@ -18,7 +18,7 @@ class Sessions(models.Model):
     cycle_number = models.IntegerField()
     direction = models.CharField(max_length=1)
     data_mode = models.CharField(max_length=1)
-    vertical_sampling_scheme = models.CharField(max_length=256)
+    vertical_sampling_scheme = models.TextField()
     juld = models.DateTimeField()
     juld_qc = models.IntegerField()
     juld_location = models.DateTimeField()
@@ -42,6 +42,19 @@ class Measurements(models.Model):
 
 
 class SysLog(models.Model):
-    moment_stamp = models.DateTimeField(default=datetime.datetime.now())
+    moment_stamp = models.DateTimeField()
     file_name = models.CharField(max_length=255)
     message = models.TextField()
+
+
+class Storage(models.Model):
+    value = models.CharField(max_length=255)
+    comment = models.CharField(max_length=255)
+
+
+class Statistic(models.Model):
+    year = models.IntegerField()
+    drifters_count = models.IntegerField()
+    sessions_count = models.IntegerField()
+    measurements_count = models.IntegerField()
+

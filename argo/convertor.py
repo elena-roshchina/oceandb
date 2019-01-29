@@ -159,7 +159,7 @@ def read_char_with_full_value(data, key):
 
 
 # dataset = Dataset('C:\\ncdf4files\\atlantic_ocean\\1997\\12\\19971231_prof.nc')
-nc_file = 'D20190101_prof_0.nc'
+nc_file = 'D20190104_prof_1.nc'
 dataset = Dataset('C:\\ncdf4files\\latest_data\\' + nc_file)
 
 

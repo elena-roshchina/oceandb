@@ -6,38 +6,56 @@ import os
 
 from argo.argo_convertor import read_strings_with_full_value, read_char_with_full_value, read_datetime_with_full_value
 from oceandb.settings import ARGO_ARCHIEVE, STATIC_URL
-from .forms import UploadFileForm
-from .models import Drifters, Sessions, Measurements, SysLog
+from .forms import UploadFileForm, CalculateDensity
+from .models import Drifters, Sessions, Measurements, SysLog, Storage
+from .functions import density
 from datetime import datetime, date, time, timedelta
 
 
-def index(request):
+DRIFTERS_COUNT = 'DRIFTERS'
+SESSIONS_COUNT = 'SESSIONS'
+MEASUREMENTS_COUNT = 'MEASUREMENTS'
+FIRST_DATE = 'FIRST_DATE'
+LAST_DATE = 'LAST_DATE'
 
+
+def index(request):
     return render(request, "index.html")
 
+
 def methods(request):
-    img = STATIC_URL + "images/under-construction.jpg"
-    return render(request, "argo/methods.html", {"path_to_img": img})
+
+    form_density = CalculateDensity()
+    msg = 'none'
+    data = {"density_form": form_density, "msg": msg}
+
+    return render(request, "argo/methods.html", context=data)
+
+
+def calc_density(request):
+
+    s = float(request.GET.get("salinity"))
+    t = float(request.GET.get("temperature"))
+    p = float(request.GET.get("pressure"))
+
+    d = density(s, t, p)
+
+    form_density = CalculateDensity()
+    data = {"density_form": form_density, "msg": str(d)}
+    return render(request, "argo/methods.html", context=data)
+
 
 def description(request):
-    drifters_in_db = Drifters.objects.all()
-    sessions_in_db = Sessions.objects.all()
-    measurements_in_db = Measurements.objects.all()
-    first = sessions_in_db.order_by('juld').first().juld
-    last = sessions_in_db.order_by('juld').last().juld
+    drifters_in_db = Storage.objects.filter(comment=DRIFTERS_COUNT).first()
+    sessions_in_db = Storage.objects.filter(comment=SESSIONS_COUNT).first()
+    measurements_in_db = Storage.objects.filter(comment=MEASUREMENTS_COUNT).first()
+    first = Storage.objects.filter(comment=FIRST_DATE).first()
+    last = Storage.objects.filter(comment=LAST_DATE).first()
 
-    first_latitude = sessions_in_db.order_by('latitude').first().latitude
-    last_latitude = sessions_in_db.order_by('latitude').last().latitude
-
-    first_longitude = sessions_in_db.order_by('longitude').first().longitude
-    last_longitude = sessions_in_db.order_by('longitude').last().longitude
-
-    data = {"drifter_count": drifters_in_db.count(),
-            "session_count": sessions_in_db.count(),
-            "measurements_count": measurements_in_db.count(),
-            "first": first, "last": last,
-            "first_latitude": first_latitude, "last_latitude": last_latitude,
-            "first_longitude": first_longitude, "last_longitude": last_longitude}
+    data = {"drifter_count": drifters_in_db.value,
+            "session_count": sessions_in_db.value,
+            "measurements_count": measurements_in_db.value,
+            "first": first.value, "last": last.value}
     return render(request, "argo/description.html", context=data)
 
 
@@ -151,7 +169,7 @@ def handle_uploaded_file(f):
                                                                       juld_qc=juld_qc,
                                                                       juld_location=juld_location,
                                                                       latitude=latitude,
-                                                                      longtitude=longitude,
+                                                                      longitude=longitude,
                                                                       position_qc=position_qc)
             if session_created:
                 session_counter += 1
@@ -199,12 +217,48 @@ def handle_uploaded_file(f):
         log_message += 'N_LEVELS=' + str(dataset.dimensions['N_LEVELS'].size) + ', '
         log_message += str(drifter_counter) + 'drifters, ' + str(session_counter) + 'sessions, '
         log_message += str(measurements_counter) + 'measurements were successfully added '
-        log_record, log_record_created = SysLog.objects.get_or_create(file_name=filename,message=log_message)
+        log_record, log_record_created = SysLog.objects.get_or_create(moment_stamp=datetime.now(),
+                                                                      file_name=filename,
+                                                                      message=log_message)
 
         if log_record_created:
             message += ' log record number ' + str(log_record.id) + ' created'
+
+        # Update statistics
+        update_general_stat()
+
         dataset.close()
         return message
+
+
+def update_general_stat():
+
+    sessions_in_db = Sessions.objects.all()
+
+    first = sessions_in_db.order_by('juld').first().juld
+    last = sessions_in_db.order_by('juld').last().juld
+
+    drifters_stat, drifters_stat_created = Storage.objects.get_or_create(comment=DRIFTERS_COUNT)
+    drifters_stat.value = str(Drifters.objects.all().count())
+    drifters_stat.save(update_fields=["value"])
+
+    sessions_stat, sessions_stat_created = Storage.objects.get_or_create(comment=SESSIONS_COUNT)
+    sessions_stat.value = str(sessions_in_db.count())
+    sessions_stat.save(update_fields=["value"])
+
+    measurements_stat, measurements_stat_created = Storage.objects.get_or_create(comment=MEASUREMENTS_COUNT)
+    measurements_stat.value = str(Measurements.objects.all().count())
+    measurements_stat.save(update_fields=["value"])
+
+    dates_first_stat, dates_first_created = Storage.objects.get_or_create(comment=FIRST_DATE)
+    dates_first_stat.value = str(first)
+    dates_first_stat.save(update_fields=["value"])
+
+    dates_last_stat, dates_last_created = Storage.objects.get_or_create(comment=LAST_DATE)
+    dates_last_stat.value = str(last)
+    dates_last_stat.save(update_fields=["value"])
+
+    return 0
 
 
 
