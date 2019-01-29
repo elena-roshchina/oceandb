@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Описание данных{% endblock title %}
+{% block header %}Описание данных{% endblock header %}
+{% block content%}
+    <div style="text-align: right; padding-right: 15px; font-style: italic; color: dodgerblue; font-size: 9pt">
+        These data were collected and made freely available by the International Argo Program
+        and the national programs that contribute to it.  <br>
+        (http://www.argo.ucsd.edu,  http://argo.jcommops.org).
+        The Argo Program is part of the Global Ocean Observing System. <br>
+        Argo (2000). Argo float data and metadata from Global Data Assembly Centre<br>
+        (Argo GDAC). SEANOE. http://doi.org/10.17882/42182
+    </div>
+    <p>База данных содержит:</p>
+    <table border="0" cellspacing="2" cellpadding="10">
+    <tr style="background-color: gainsboro"><th>Количество буев</th>
+        <th>Сеансов измерений</th>
+        <th>Измерений</th>
+        <th>Диапазон дат UTC</th>
+        <th>Диапазон широты</th>
+        <th>Диапазон долготы</th>
+    </tr>
+    <tr align="center">
+        <td>{{ drifter_count }}</td>
+        <td>{{ session_count }}</td>
+        <td>{{ measurements_count }}</td>
+        <td>{{ first }} - {{ last }} </td>
+        <td>{{ first_latitude }} - {{ last_latitude }} </td>
+        <td>{{ first_longitude }} - {{ last_longitude }} </td>
+    </tr>
+    </table><br>
+
+
+{% endblock content %}
