@@ -1,1 +1,0 @@
-OceanDB - diploma project for CPSMI. 
