@@ -92,11 +92,113 @@ def density(sal, temp, pressure):
     return density_s_t_0 / (1 - pressure / bulk_modulus(sal=sal, t=temp, press=pressure))
 
 
-"""
-salinity = [0, 35]
-temperature = [5, 25]
-pressure = [0, 1000]
+def vilson_sound_velocity(sal, temp, pressure):
+    # Sound velocity general formulae
+    # c = c0 + delta_c_temp + delta_c_sal + delta_c_press + delta_c_tsp
+    # pressure unit = decibar, salinity = psu, temperatures in degree C
 
+    sal0 = 35.0
+    sal -= sal0
+    c = 1449.14
+    c_temp = [4.5721, -4.4532E-2, -2.6045E-4, 7.9851E-6]
+    for i in range(len(c_temp)):
+        c += c_temp[i] * (temp ** (i+1))
+
+    c_sal = [1.39799, 1.69202E-3]
+    for i in range(len(c_sal)):
+        c += c_sal[i] * (sal ** (i+1))
+
+    c_press = [1.60272E-1, 1.0268E-5, 3.5216E-9, -3.3603E-12]
+    for i in range(len(c_press)):
+        c += c_press[i] * (pressure ** (i + 1))
+
+    a = [-1.1244E-2, 7.7711E-7, 7.7016E-5,
+             -1.2943E-7, 3.1580E-8, 1.5790E-9,
+             -1.8607E-4, 7.4812E-6, 4.5283E-8,
+             -2.5294E-7, 1.8563E-9, -1.9646E-10]
+
+    t2 = temp ** 2
+    p2 = pressure ** 2
+    pt = pressure * temp
+    pt2 = pt * temp
+    pt3 = pt2 * temp
+    p2t = pt * pressure
+    p3t = p2t * pressure
+    p2t2 = pt * pt
+
+    param = [sal * temp, sal * t2, sal * pressure, sal * p2, sal * pt, sal * pt2,
+             pt, pt2, pt3, p2t, p2t2, p3t]
+
+    for i in range(len(a)):
+        c += a[i] * param[i]
+    return c
+
+
+def unesco_sound_velosity(sal, temp, pressure):
+    # Sound velocity UNESCO formulae
+    # Fofonov, 1983
+    # sound_vel = c_w + AS + B (S ** 3/2) + D * (S ** 2)
+    # pressure unit = decibar, salinity = psu, temperatures in degree C
+
+    # scale pressure to bars
+    pressure /= 10
+    p2 = pressure ** 2
+    p3 = pressure ** 3
+
+    c_coeff = [[1402.388, 5.03711, -5.80852E-2, 3.3420E-4, -1.47800E-6, 3.1464E-9],
+         [0.153563, 6.8982E-4, -8.1788E-6, 1.3621E-7, -6.1185E-10],
+         [3.1260E-5, -1.7107E-6, 2.5974E-8, -2.5335E-10, 1.0405E-12],
+         [-9.7729E-9, 3.8504E-10, -2.3643E-12]]
+
+    c_w = 0.0
+    for i in range(len(c_coeff)):
+        for j in range(len(c_coeff[i])):
+            c_w += c_coeff[i][j] * (temp ** j) * (pressure ** i)
+
+    a_coeff = [[1.389, -1.262E-2, 7.164E-5, 2.006E-6, -3.21E-8],
+         [9.4742E-5, -1.2580E-5, -6.4885E-8, 1.0507E-8, -2.0122E-10],
+         [-3.9064E-7, 9.1041E-9, -1.6002E-10, 7.988E-12],
+         [1.100E-10, 6.649E-12, -3.389E-13]]
+
+    a = 0.0
+    for i in range(len(a_coeff)):
+        for j in range(len(a_coeff[i])):
+            a += a_coeff[i][j] * (temp ** j) * (pressure ** i)
+
+    b_coeff = [[-1.922E-2, -4.42E-5],
+               [7.3637E-5, 1.7945E-7]]
+
+    b = 0.0
+    for i in range(len(b_coeff)):
+        for j in range(len(b_coeff[i])):
+            b += b_coeff[i][j] * (temp ** j) * (pressure ** i)
+
+    d = 1.727E-3 - 7.9836E-6 * pressure
+    return c_w + a * sal + b * (sal ** Fraction(3,2)) + d * (sal ** 2)
+
+
+salinity = [0, 35, 40]
+temperature = [0, 5, 10, 30, 40]
+pressure = [0, 10, 100, 10000]
+
+"""
+# Sound velocity calculation test
+print(' sal ,  t  ,  p  , sound velocity ')
+for i in range(len(salinity)):
+    for j in range(len(temperature)):
+        for k in range(len(pressure)):
+            delta = vilson_sound_velocity(salinity[i], temperature[j], pressure[k]) - unesco_sound_velosity(salinity[i], temperature[j], pressure[k])
+
+            print("%3d" % salinity[i],
+                  "%5d" % temperature[j],
+                  "%6d" % pressure[k],
+                  "%9.3f" % vilson_sound_velocity(salinity[i], temperature[j], pressure[k]),
+                  "%9.3f" % unesco_sound_velosity(salinity[i], temperature[j], pressure[k]))
+
+"""
+
+"""
+# Density calculation test
 print(' sal ,  t  ,  p  , density ')
 for i in range(2):
     for j in range(2):

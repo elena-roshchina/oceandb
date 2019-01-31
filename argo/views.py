@@ -46,16 +46,16 @@ def calc_density(request):
 
 
 def description(request):
-    drifters_in_db = Storage.objects.filter(comment=DRIFTERS_COUNT).first()
-    sessions_in_db = Storage.objects.filter(comment=SESSIONS_COUNT).first()
-    measurements_in_db = Storage.objects.filter(comment=MEASUREMENTS_COUNT).first()
-    first = Storage.objects.filter(comment=FIRST_DATE).first()
-    last = Storage.objects.filter(comment=LAST_DATE).first()
+    drifters_in_db = Storage.objects.filter(comment=DRIFTERS_COUNT).first().value
+    sessions_in_db = Storage.objects.filter(comment=SESSIONS_COUNT).first().value
+    measurements_in_db = Storage.objects.filter(comment=MEASUREMENTS_COUNT).first().value
+    first = Storage.objects.filter(comment=FIRST_DATE).first().value[:10]
+    last = Storage.objects.filter(comment=LAST_DATE).first().value[:10]
 
-    data = {"drifter_count": drifters_in_db.value,
-            "session_count": sessions_in_db.value,
-            "measurements_count": measurements_in_db.value,
-            "first": first.value, "last": last.value}
+    data = {"drifter_count": drifters_in_db,
+            "session_count": sessions_in_db,
+            "measurements_count": measurements_in_db,
+            "first": first, "last": last}
     return render(request, "argo/description.html", context=data)
 
 
@@ -100,7 +100,7 @@ def handle_uploaded_file(f):
             message += ' log record number ' + str(log_record.id) + ' created'
         return message
 
-    save_path = ARGO_ARCHIEVE + '\\' + datetime.today().strftime("%Y%m%d") + '\\'
+    save_path = ARGO_ARCHIEVE
     time_start = datetime.now()
     message = ''
 
