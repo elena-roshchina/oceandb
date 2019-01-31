@@ -148,35 +148,28 @@ def unesco_sound_velosity(sal, temp, pressure):
     pressure /= 10
     p2 = pressure ** 2
     p3 = pressure ** 3
-
     c_coeff = [[1402.388, 5.03711, -5.80852E-2, 3.3420E-4, -1.47800E-6, 3.1464E-9],
          [0.153563, 6.8982E-4, -8.1788E-6, 1.3621E-7, -6.1185E-10],
          [3.1260E-5, -1.7107E-6, 2.5974E-8, -2.5335E-10, 1.0405E-12],
          [-9.7729E-9, 3.8504E-10, -2.3643E-12]]
-
     c_w = 0.0
     for i in range(len(c_coeff)):
         for j in range(len(c_coeff[i])):
             c_w += c_coeff[i][j] * (temp ** j) * (pressure ** i)
-
     a_coeff = [[1.389, -1.262E-2, 7.164E-5, 2.006E-6, -3.21E-8],
          [9.4742E-5, -1.2580E-5, -6.4885E-8, 1.0507E-8, -2.0122E-10],
          [-3.9064E-7, 9.1041E-9, -1.6002E-10, 7.988E-12],
          [1.100E-10, 6.649E-12, -3.389E-13]]
-
     a = 0.0
     for i in range(len(a_coeff)):
         for j in range(len(a_coeff[i])):
             a += a_coeff[i][j] * (temp ** j) * (pressure ** i)
-
     b_coeff = [[-1.922E-2, -4.42E-5],
                [7.3637E-5, 1.7945E-7]]
-
     b = 0.0
     for i in range(len(b_coeff)):
         for j in range(len(b_coeff[i])):
             b += b_coeff[i][j] * (temp ** j) * (pressure ** i)
-
     d = 1.727E-3 - 7.9836E-6 * pressure
     return c_w + a * sal + b * (sal ** Fraction(3,2)) + d * (sal ** 2)
 

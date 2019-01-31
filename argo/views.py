@@ -74,7 +74,6 @@ def calc_depth(request):
     p = float(request.GET.get("pressure"))
 
     depth = calculate_depth(lat, p)
-
     form_density = CalculateDensity()
     form_svel = CalculateSoundVelocity()
     form_depth = CalculateDepth()
