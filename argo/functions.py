@@ -73,6 +73,9 @@ def bulk_modulus(sal, t, press):
 
 
 def density(sal, temp, pressure):
+    # pressure unit = decibar, salinity = psu, temperatures in degree C
+    # scale pressure to bars
+    pressure /= 10
     bi = [8.24493E-1,
           -4.0899E-3,
           7.6438E-5,
@@ -96,7 +99,8 @@ def vilson_sound_velocity(sal, temp, pressure):
     # Sound velocity general formulae
     # c = c0 + delta_c_temp + delta_c_sal + delta_c_press + delta_c_tsp
     # pressure unit = decibar, salinity = psu, temperatures in degree C
-
+    # scale pressure to bars
+    pressure /= 10
     sal0 = 35.0
     sal -= sal0
     c = 1449.14
@@ -181,7 +185,7 @@ salinity = [0, 35, 40]
 temperature = [0, 5, 10, 30, 40]
 pressure = [0, 10, 100, 10000]
 
-"""
+
 # Sound velocity calculation test
 print(' sal ,  t  ,  p  , sound velocity ')
 for i in range(len(salinity)):
@@ -195,7 +199,7 @@ for i in range(len(salinity)):
                   "%9.3f" % vilson_sound_velocity(salinity[i], temperature[j], pressure[k]),
                   "%9.3f" % unesco_sound_velosity(salinity[i], temperature[j], pressure[k]))
 
-"""
+
 
 """
 # Density calculation test

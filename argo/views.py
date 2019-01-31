@@ -6,9 +6,9 @@ import os
 
 from argo.argo_convertor import read_strings_with_full_value, read_char_with_full_value, read_datetime_with_full_value
 from oceandb.settings import ARGO_ARCHIEVE, STATIC_URL
-from .forms import UploadFileForm, CalculateDensity
+from .forms import UploadFileForm, CalculateDensity, CalculateSoundVelocity
 from .models import Drifters, Sessions, Measurements, SysLog, Storage
-from .functions import density
+from .functions import density, unesco_sound_velosity
 from datetime import datetime, date, time, timedelta
 
 
@@ -27,7 +27,11 @@ def methods(request):
 
     form_density = CalculateDensity()
     msg = 'none'
-    data = {"density_form": form_density, "msg": msg}
+
+    form_svel = CalculateSoundVelocity()
+    msg_svel = 'none'
+    data = {"svel_form": form_svel, "msg_svel": msg_svel,
+            "density_form": form_density, "msg": msg}
 
     return render(request, "argo/methods.html", context=data)
 
@@ -41,7 +45,25 @@ def calc_density(request):
     d = density(s, t, p)
 
     form_density = CalculateDensity()
-    data = {"density_form": form_density, "msg": str(d)}
+    form_svel = CalculateSoundVelocity()
+
+    data = {"svel_form": form_svel, "msg_svel": 'none',
+            "density_form": form_density, "msg": str(d)}
+    return render(request, "argo/methods.html", context=data)
+
+
+def calc_svel(request):
+
+    s = float(request.GET.get("salinity"))
+    t = float(request.GET.get("temperature"))
+    p = float(request.GET.get("pressure"))
+
+    sv = unesco_sound_velosity(s, t, p)
+
+    form_density = CalculateDensity()
+    form_svel = CalculateSoundVelocity()
+    data = {"svel_form": form_svel, "msg_svel": str(sv),
+            "density_form": form_density, "msg": 'none'}
     return render(request, "argo/methods.html", context=data)
 
 

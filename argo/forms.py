@@ -8,4 +8,10 @@ class UploadFileForm(forms.Form):
 class CalculateDensity(forms.Form):
     salinity = forms.FloatField(min_value=0.0, max_value=42.0)
     temperature = forms.FloatField(min_value=-2.0, max_value=40.0)
-    pressure = forms.FloatField(min_value=0.0, max_value=1000.0)
+    pressure = forms.FloatField(min_value=0.0, max_value=10000.0)
+
+
+class CalculateSoundVelocity(forms.Form):
+    salinity = forms.FloatField(min_value=0.0, max_value=42.0)
+    temperature = forms.FloatField(min_value=-2.0, max_value=40.0)
+    pressure = forms.FloatField(min_value=0.0, max_value=10000.0)

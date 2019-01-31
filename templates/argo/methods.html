@@ -5,7 +5,7 @@
 
     <p>Расчет плотности морской воды согласно
         <a href="http://docs.cntd.ru/document/1200105587" target="_blank">ГСССД 76-84</a> </p>
-    <p>Введите температуру (гр. Цельсия), соленость (ПЕС, PSU) и давление (Бар): </p>
+    <p>Введите температуру (гр. Цельсия), соленость (ПЕС, PSU) и давление (дБар): </p>
     <form method="GET" action="/density/">
         {% csrf_token %}
         <table>
@@ -25,6 +25,31 @@
     </form>
     {% if msg != 'none' %}
         <p><b>Плотность морской воды:</b>{{ msg }}</p>
+    {% endif %}
+
+    <p>Расчет скорости звука в морской воду согласно алгоритму, приведенному в работе
+        <i>Fofonoff N.P. Algorithms for computation of fundamental properties of seawater / N.P. Fofonoff,
+            R.C. Millard Jr. – UNESCO , 1983. – 44. – 54 p.</i></p>
+    <p>Введите температуру (гр. Цельсия), соленость (ПЕС, PSU) и давление (дБар): </p>
+    <form method="GET" action="/svel/">
+        {% csrf_token %}
+        <table>
+            <tr>
+                <td>
+                    <table>
+                        {{ svel_form }}
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td align="center">
+                   <input type="submit" value="Вычислить" >
+                </td>
+            </tr>
+        </table>
+    </form>
+    {% if msg_svel != 'none' %}
+        <p><b>Скорость звука в морской воде:</b>{{ msg_svel }}</p>
     {% endif %}
 
 {% endblock content %}
