@@ -181,24 +181,51 @@ def unesco_sound_velosity(sal, temp, pressure):
     return c_w + a * sal + b * (sal ** Fraction(3,2)) + d * (sal ** 2)
 
 
+def calculate_depth(latitude, pressure):
+    # Глубина погружения зависит от гидростатического давления
+    # и широты местоположения системы измерения
+    # где H - глубина в метрах;
+    # pressure, дБар - единицы входного значения)
+    # p - гидростатическое давление МПа (=100 дБар
+    # географическая широта в угловых градусах
+    # источник  П.А.Калашников Гидрометиздат 1985 с 47, 80, 113
+
+    phi = abs(latitude)
+    p = pressure / 100
+    a = [99.404, 4.983E-4, -2.06E-4, 1.492E-6]
+    h = 0.0
+    for i in range(len(a)):
+        h += a[i] * (phi ** i)
+    h -= 2.204E-2 * p
+    return h * p
+
+
 salinity = [0, 35, 40]
 temperature = [0, 5, 10, 30, 40]
-pressure = [0, 10, 100, 10000]
+pr = [0, 10, 100, 10000]
+lat = [0.0, 25.0, 50.0, 70.0]
+"""
+# Depth calculation test
+print(' p  , depth ')
+for i in range(len(pr)):
+    for j in range(len(lat)):
+        print('latitude', lat[i], 'p = ', "%6d" % pr[j], calculate_depth(lat[i], pr[j]) )
+"""
 
-
+"""
 # Sound velocity calculation test
 print(' sal ,  t  ,  p  , sound velocity ')
 for i in range(len(salinity)):
     for j in range(len(temperature)):
-        for k in range(len(pressure)):
-            delta = vilson_sound_velocity(salinity[i], temperature[j], pressure[k]) - unesco_sound_velosity(salinity[i], temperature[j], pressure[k])
+        for k in range(len(pr)):
+            delta = vilson_sound_velocity(salinity[i], temperature[j], pr[k]) - unesco_sound_velosity(salinity[i], temperature[j], pressure[k])
 
             print("%3d" % salinity[i],
                   "%5d" % temperature[j],
-                  "%6d" % pressure[k],
-                  "%9.3f" % vilson_sound_velocity(salinity[i], temperature[j], pressure[k]),
-                  "%9.3f" % unesco_sound_velosity(salinity[i], temperature[j], pressure[k]))
-
+                  "%6d" % pr[k],
+                  "%9.3f" % vilson_sound_velocity(salinity[i], temperature[j], pr[k]),
+                  "%9.3f" % unesco_sound_velosity(salinity[i], temperature[j], pr[k]))
+"""
 
 
 """

@@ -26,4 +26,5 @@ urlpatterns = [
     path('methods/', views.methods, name="methods"),
     path('density/', views.calc_density, name="density"),
     path('svel/', views.calc_svel, name="svelocity"),
+    path('depth/', views.calc_depth, name="depth"),
 ]

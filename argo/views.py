@@ -6,9 +6,9 @@ import os
 
 from argo.argo_convertor import read_strings_with_full_value, read_char_with_full_value, read_datetime_with_full_value
 from oceandb.settings import ARGO_ARCHIEVE, STATIC_URL
-from .forms import UploadFileForm, CalculateDensity, CalculateSoundVelocity
+from .forms import UploadFileForm, CalculateDensity, CalculateSoundVelocity, CalculateDepth
 from .models import Drifters, Sessions, Measurements, SysLog, Storage
-from .functions import density, unesco_sound_velosity
+from .functions import density, unesco_sound_velosity, calculate_depth
 from datetime import datetime, date, time, timedelta
 
 
@@ -24,15 +24,12 @@ def index(request):
 
 
 def methods(request):
-
     form_density = CalculateDensity()
-    msg = 'none'
-
     form_svel = CalculateSoundVelocity()
-    msg_svel = 'none'
-    data = {"svel_form": form_svel, "msg_svel": msg_svel,
-            "density_form": form_density, "msg": msg}
-
+    form_depth = CalculateDepth()
+    data = {"svel_form": form_svel, "msg_svel": 'none',
+            "density_form": form_density, "msg": 'none',
+            "depth_form": form_depth, "msg_depth": 'none'}
     return render(request, "argo/methods.html", context=data)
 
 
@@ -46,9 +43,11 @@ def calc_density(request):
 
     form_density = CalculateDensity()
     form_svel = CalculateSoundVelocity()
+    form_depth = CalculateDepth()
 
     data = {"svel_form": form_svel, "msg_svel": 'none',
-            "density_form": form_density, "msg": str(d)}
+            "density_form": form_density, "msg": str(d),
+            "depth_form": form_depth, "msg_depth": 'none'}
     return render(request, "argo/methods.html", context=data)
 
 
@@ -62,8 +61,26 @@ def calc_svel(request):
 
     form_density = CalculateDensity()
     form_svel = CalculateSoundVelocity()
+    form_depth = CalculateDepth()
     data = {"svel_form": form_svel, "msg_svel": str(sv),
-            "density_form": form_density, "msg": 'none'}
+            "density_form": form_density, "msg": 'none',
+            "depth_form": form_depth, "msg_depth": 'none'}
+    return render(request, "argo/methods.html", context=data)
+
+
+def calc_depth(request):
+
+    lat = float(request.GET.get("latitude"))
+    p = float(request.GET.get("pressure"))
+
+    depth = calculate_depth(lat, p)
+
+    form_density = CalculateDensity()
+    form_svel = CalculateSoundVelocity()
+    form_depth = CalculateDepth()
+    data = {"svel_form": form_svel, "msg_svel": 'none',
+            "density_form": form_density, "msg": 'none',
+            "depth_form": form_depth, "msg_depth": str(depth)}
     return render(request, "argo/methods.html", context=data)
 
 
