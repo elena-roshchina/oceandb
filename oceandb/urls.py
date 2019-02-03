@@ -22,6 +22,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name="home"),
     path('argo/', views.argo_upload, name="argo"),
+    path('drifters/', views.drifters, name="drifters"),
+    path('drifter_info/', views.drifter_info, name="drifter_info"),
     path('argo/calculations/', views.calculations, name="calculations"),
     path('description/', views.description, name="description"),
     path('methods/', views.methods, name="methods"),

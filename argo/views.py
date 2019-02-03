@@ -98,6 +98,42 @@ def description(request):
     return render(request, "argo/description.html", context=data)
 
 
+def drifters(request):
+    drifter_numbers = []
+    drifters_found = Drifters.objects.in_bulk()
+    for d in drifters_found:
+        drifter_numbers.append({"id": drifters_found[d].id,
+                                "drifter_num": int(drifters_found[d].platform_number)})
+    drifter_numbers.sort(key=lambda d: d['drifter_num'])
+    data = {"count": len(drifter_numbers), "drifters": drifter_numbers}
+    return render(request, "argo/drifters.html", context=data)
+
+
+def drifter_info(request):
+    id_no = request.GET.get("id")
+    try:
+        drifter = Drifters.objects.get(id=id_no)
+        dr_sessions = Sessions.objects.filter(drifter=drifter)[:]
+        if dr_sessions is not None:
+            sessions_found = []
+            for s in dr_sessions:
+                sessions_found.append({"id": s.id,
+                                       "moment": s.juld,
+                                       "latitude": s.latitude,
+                                       "longitude": s.longitude})
+
+            data = {"status": 1,
+                    "number": drifter.platform_number,
+                    "serial": drifter.float_serial_no,
+                    "sessions": sessions_found}
+        else:
+            data = {"status": 2, "number": drifter.platform_number}  # 2 - сессий нет для этого буя
+    except ObjectDoesNotExist:
+        data = {"status": 0, "number": id} # буй не найден
+
+    return render(request, "argo/drifter_info.html", context=data)
+
+
 def make_calculations():
     # Служебная функция для вычисления глубины, плотности и скорости звука и
     # заполнения полей в БД начиная с номера i (здесь 393390)

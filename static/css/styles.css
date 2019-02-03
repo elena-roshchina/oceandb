@@ -4,6 +4,8 @@ body{
     background-color: white;
     color: #333333;
 }
+.drifter{ margin: 5px;
+display: block}
 
 a:link {
   color: #497DDD;
