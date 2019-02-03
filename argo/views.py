@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from netCDF4 import Dataset
@@ -97,6 +98,76 @@ def description(request):
     return render(request, "argo/description.html", context=data)
 
 
+def make_calculations():
+    # Служебная функция для вычисления глубины, плотности и скорости звука и
+    # заполнения полей в БД начиная с номера i (здесь 393390)
+    # одноразовая - в дальнейшем поля будут заполняться при начальной загрузке записей из файла
+    # необходимо исправить - сначала выбирается сессия, потом по ее id - все измерения и
+    # действия совершать с массивом, а то неоптимально - широта требуется в каждой записи измерений,
+    # когда ее можно было получить один раз на всю серию
+    counter = 0
+    """
+    try:
+        i = 393390
+        while True:
+            measure = Measurements.objects.get(id=i)
+            msg = str(measure.id)
+            # _FillValue checking
+            no_fillvalue = measure.psal_adjusted != 99999 and measure.temp_adjusted != 99999
+
+            # Quality Control checking qc=4 should be ignored
+            pres_qc_valid = measure.pres_adjusted_qc != 4 and measure.pres_adjusted_qc != 9
+            psal_qc_valid = measure.psal_adjusted_qc != 4 and measure.psal_adjusted_qc != 9
+            temp_qc_valid = measure.temp_adjusted_qc != 4 and measure.temp_adjusted_qc != 9
+
+            # Values Control
+            values_valid = measure.pres_adjusted > 0.0 and measure.psal_adjusted > 0.0 and measure.temp_adjusted > -1.9
+
+            is_valid = no_fillvalue and pres_qc_valid and psal_qc_valid and temp_qc_valid and values_valid
+
+            if is_valid:
+                lat = Sessions.objects.get(id=measure.session_id).latitude
+                measure.depth = calculate_depth(abs(lat), measure.pres_adjusted)
+                measure.density = density(measure.psal_adjusted,
+                                          measure.temp_adjusted, measure.pres_adjusted)
+                measure.sound_vel = unesco_sound_velosity(measure.psal_adjusted,
+                                                          measure.temp_adjusted, measure.pres_adjusted)
+                measure.save()
+            i += 1
+            counter += 1
+    except ObjectDoesNotExist:
+        pass
+    """
+    return str(counter)
+
+
+def get_coordinates():
+
+    coord = []
+    sessions = Sessions.objects.in_bulk()
+    for s in sessions:
+        coord.append({"moment": sessions[s].juld,
+                      "latitude": sessions[s].latitude,
+                      "longitude": sessions[s].longitude})
+
+    return coord
+
+
+def calculations(request):
+
+    # log = SysLog.objects.all()
+    # log_count = log.count()
+    # log_history = log[(log_count - 5):]
+    # form = UploadFileForm()
+
+    res = get_coordinates()
+    total = len(res)
+
+    # data = {"form": form, "log": log_history, "result": res}
+    data = {"coordinates": res, "total": total}
+    return render(request, "argo/test.html", context=data)
+
+
 def argo_upload(request):
     log = SysLog.objects.all()
     log_count = log.count()
@@ -119,11 +190,11 @@ def argo_upload(request):
         form = UploadFileForm()
         msg = "form is not valid"
         name = "None"
-        data = {"filename": name, "message": msg, "form": form, "log": log_history}
+        data = {"filename": name, "message": msg, "form": form, "log": log_history, "result": 'none'}
         return render(request, "argo/main.html", context=data)
     else:
         form = UploadFileForm()
-        data = {"form": form, "log": log_history}
+        data = {"form": form, "log": log_history, "result": 'none'}
         return render(request, "argo/main.html", context=data)
 
 

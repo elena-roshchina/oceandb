@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Тестовые вычисления{% endblock title %}
+{% block header %}Тестовые вычисления{% endblock header %}
+{% block content%}
+    {% if total != 0 %}
+        <p>Получено точек: {{ total }} </p>
+        <table>
+            <th>Latitude</th>
+            <th>Longitude</th>
+        {% for c in coordinates %}
+            <tr>
+                <td>{{ c.moment }}</td>
+                <td>{{ c.latitude}}</td>
+                <td>{{ c.longitude }}</td>
+            </tr>
+
+        {% endfor %}
+
+        </table>
+
+
+    {% endif %}
+
+
+
+
+{% endblock content %}

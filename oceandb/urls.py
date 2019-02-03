@@ -22,6 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name="home"),
     path('argo/', views.argo_upload, name="argo"),
+    path('argo/calculations/', views.calculations, name="calculations"),
     path('description/', views.description, name="description"),
     path('methods/', views.methods, name="methods"),
     path('density/', views.calc_density, name="density"),
