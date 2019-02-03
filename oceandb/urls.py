@@ -24,6 +24,7 @@ urlpatterns = [
     path('argo/', views.argo_upload, name="argo"),
     path('drifters/', views.drifters, name="drifters"),
     path('drifter_info/', views.drifter_info, name="drifter_info"),
+    path('session_info/', views.session_info, name="session_info"),
     path('argo/calculations/', views.calculations, name="calculations"),
     path('description/', views.description, name="description"),
     path('methods/', views.methods, name="methods"),

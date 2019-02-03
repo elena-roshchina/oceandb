@@ -4,8 +4,6 @@ body{
     background-color: white;
     color: #333333;
 }
-.drifter{ margin: 5px;
-display: block}
 
 a:link {
   color: #497DDD;
@@ -56,7 +54,7 @@ a.menu:active {
     padding-bottom: 5px;
     background-color: dodgerblue;
     padding-left: 15px;
-    color: white
+    color: white;
 }
 
 h1{color:navy;}

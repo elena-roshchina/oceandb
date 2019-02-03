@@ -9,15 +9,11 @@
             <th>Longitude</th>
         {% for c in coordinates %}
             <tr>
-                <td>{{ c.moment }}</td>
+                <td><a href="/session_info/?session_id={{ c.id }}">{{ c.moment }}</a></td>
                 <td>{{ c.latitude}}</td>
                 <td>{{ c.longitude }}</td>
             </tr>
-
         {% endfor %}
-
         </table>
-
-
     {% endif %}
 {% endblock content %}

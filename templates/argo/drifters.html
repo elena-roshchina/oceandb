@@ -6,23 +6,12 @@
     {% if count != 0 %}
         <p>Всего буйков: {{ count }} </p>
         <table cellspacing="5px" border="0">
-
         {% for d in drifters %}
-
             {% if forloop.counter0|get_digit:"1" == 0 %}
                 <tr>
             {% endif %}
             <td><a  href="/drifter_info/?id={{ d.id }}"> {{ d.drifter_num }} </a> </td>
-
         {% endfor %}
         </table>
-        <br>
-
-
-
     {% endif %}
-
-
-
-
 {% endblock content %}

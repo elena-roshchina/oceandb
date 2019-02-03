@@ -114,7 +114,7 @@ def drifter_info(request):
     try:
         drifter = Drifters.objects.get(id=id_no)
         dr_sessions = Sessions.objects.filter(drifter=drifter)[:]
-        if dr_sessions is not None:
+        if len(dr_sessions) != 0:
             sessions_found = []
             for s in dr_sessions:
                 sessions_found.append({"id": s.id,
@@ -132,6 +132,48 @@ def drifter_info(request):
         data = {"status": 0, "number": id} # буй не найден
 
     return render(request, "argo/drifter_info.html", context=data)
+
+
+def session_info(request):
+    session_id = request.GET.get("session_id")
+    try:
+        session_this = Sessions.objects.get(id=session_id)
+        measured_values = Measurements.objects.filter(session=session_this)[:]
+        if len(measured_values) != 0:
+            values_list = []
+            for m in measured_values:
+                values_list.append({"pressure": m.pres_adjusted,
+                                    "pressure_qc": m.pres_adjusted_qc,
+                                    "salinity": m.psal_adjusted,
+                                    "salinity_qc": m.psal_adjusted_qc,
+                                    "temperature": m.temp_adjusted,
+                                    "temperature_qc": m.temp_adjusted_qc,
+                                    "depth": m.depth,
+                                    "density": m.density,
+                                    "svelocity": m.sound_vel})
+            values_list.sort(key=lambda d: d['depth'])
+            data = {"status": 1,
+                    "session": {"id": session_this.id,
+                                "moment": session_this.juld,
+                                "latitude": session_this.latitude,
+                                "longitude": session_this.longitude,
+                                "qc": session_this.position_qc},
+                    "count": len(measured_values),
+                    "measurements": values_list}
+        else:
+            data = {"status": 1,
+                    "session": {"id": session_this.id,
+                                "moment": session_this.juld,
+                                "latitude": session_this.latitude,
+                                "longitude": session_this.longitude,
+                                "qc": session_this.position_qc},
+                    "count": 0}
+
+
+    except ObjectDoesNotExist:
+        data = {"status": 0, "session": {"id": session_id}}
+
+    return render(request, "argo/session_info.html", context=data)
 
 
 def make_calculations():
@@ -184,7 +226,8 @@ def get_coordinates():
     for s in sessions:
         coord.append({"moment": sessions[s].juld,
                       "latitude": sessions[s].latitude,
-                      "longitude": sessions[s].longitude})
+                      "longitude": sessions[s].longitude,
+                      "id": sessions[s].id})
 
     return coord
 
