@@ -16,79 +16,44 @@ def density_w(t):
 
 def bulk_modulus(sal, t, press):
     # средний модуль упругости K(S, t, p)
-    hi = [3.239908,
-         1.43713E-3,
-         1.16092E-4,
-         -5.77905E-7]
-    a_w = 0.0
-    for i in range(4):
-        a_w += hi[i] * (t ** i)
-    ki = [8.50935E-5,
-         -6.12293E-6,
-         5.2787E-8]
-    b_w = 0.0
-    for i in range(3):
-        b_w += ki[i] * (t ** i)
+    # векторы сост. из степеней p и t
+    t_degr = np.array([t ** x for x in range(5)], float)
+    p_degr = np.array([t ** x for x in range(3)], float)
 
-    ii = [2.2838E-3,
-          -1.0981E-5,
-          -1.6078E-6]
-    a = a_w
-    for i in range(3):
-        a += ii[i] * (t ** i) * sal
-    a += 1.91075E-4 * (sal ** Fraction(3,2))
+    # вычисление коэффициента упругости чистой среднеокеанической воды K_w на поверхности
+    coeff_e = np.array([19652.21, 148.4206, -2.327105, 1.360477E-2, -5.155288E-5], float)
+    coeff_f = np.array([54.6746, -0.603459, 1.09987E-2, -6.1670E-5, 0.00000000000], float) * sal
+    coeff_g = np.array([7.944E-2, 1.6483E-2, -5.3009E-4, 0.00000000000, 0.000000000], float) * (sal ** Fraction(3,2))
 
-    mi = [-9.9348E-7,
-         2.0816E-8,
-         9.1697E-10]
-    b = b_w
-    for i in range(3):
-        b += mi[i] * (t ** i) * sal
+    k_s_t_02 = np.dot(coeff_e + coeff_f + coeff_g, t_degr)
 
-    ei = [19652.21,
-          148.4206,
-          -2.327105,
-          1.360477E-2,
-          -5.155288E-5]
-    k_w = 0.0
-    for i in range(5):
-        k_w += ei[i] * (t ** i)
+    # вычисление коэффициента А
+    coeff_i = np.array([2.2838E-3, -1.0981E-5, -1.6078E-6, 0.0, 0.0], float) * sal
+    coeff_h = np.array([3.239908, 1.43713E-3, 1.16092E-4, -5.77905E-7, 0.0], float)
+    coeff_j = 1.91075E-4
+    aa = np.dot(coeff_h + coeff_i, t_degr) + coeff_j * (sal ** Fraction(3,2))
+    # вычисление коэффициента B
 
-    fi = [54.6746,
-          -0.603459,
-          1.09987E-2,
-          -6.1670E-5]
-    gi = [7.944E-2,
-          1.6483E-2,
-          -5.3009E-4,
-          0.0]
-    k_s_t_0 = k_w
-    for i in range(4):
-        k_s_t_0 += fi[i] * (t ** i) * sal + gi[i] * (t ** i) * (sal ** Fraction(3, 2))
-    return k_s_t_0 + a * press + b * (press ** 2)
+    coeff_k = np.array([8.50935E-5, -6.12293E-6, 5.2787E-8, 0.0, 0.0], float)
+    coeff_m = np.array([-9.9348E-7, 2.0816E-8, 9.1697E-10, 0.0, 0.0], float) * sal
+    bb = np.dot(coeff_k + coeff_m, t_degr)
+
+    # вычисление СРЕДНЕГО модуля упругости чистой среднеокеанической воды K
+    coefficients = np.array([k_s_t_02, aa, bb])
+
+    return np.dot(coefficients, p_degr)
 
 
 def density(sal, temp, pressure):
     # pressure unit = decibar, salinity = psu, temperatures in degree C
     # scale pressure to bars
     pressure /= 10
-    bi = [8.24493E-1,
-          -4.0899E-3,
-          7.6438E-5,
-          -8.2467E-7,
-          5.3875E-9]
-    ci = [-5.72466E-3,
-          1.0227E-4,
-          -1.6546E-6,
-          0.0,
-          0.0]
+    t_degr = np.array([temp ** x for x in range(5)], float)
+    b = np.array([8.24493E-1, -4.0899E-3, 7.6438E-5, -8.2467E-7, 5.3875E-9]) * sal
+    c = np.array([-5.72466E-3, 1.0227E-4, -1.6546E-6, 0.0, 0.0]) * (sal ** Fraction(3,2))
     d0 = 4.8314E-4
-    density_s_t_0 = density_w(t=temp)
-    for i in range(5):
-        density_s_t_0 += bi[i] * (temp ** i) * sal + ci[i] * (temp ** i) * (sal ** Fraction(3,2))
-    density_s_t_0 += d0 * (sal ** 2)
-
-    return density_s_t_0 / (1 - pressure / bulk_modulus(sal=sal, t=temp, press=pressure))
+    dens_s_t_0 = density_w(t=temp) + np.dot(b + c,t_degr) + d0 * (sal ** 2)
+    return dens_s_t_0 / (1 - pressure / bulk_modulus(sal=sal, t=temp, press=pressure))
 
 
 def vilson_sound_velocity(sal, temp, pressure):
