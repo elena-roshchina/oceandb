@@ -7,7 +7,7 @@ import os
 
 from argo.argo_convertor import read_strings_with_full_value, read_char_with_full_value, read_datetime_with_full_value
 from oceandb.settings import ARGO_ARCHIEVE, STATIC_URL
-from .forms import UploadFileForm, CalculateDensity, CalculateSoundVelocity, CalculateDepth
+from .forms import UploadFileForm, CalculateDensity, CalculateSoundVelocity, CalculateDepth, DataTypeSelection
 from .models import Drifters, Sessions, Measurements, SysLog, Storage
 from .functions import density, unesco_sound_velosity, calculate_depth
 from datetime import datetime, date, time, timedelta
@@ -21,7 +21,15 @@ LAST_DATE = 'LAST_DATE'
 
 
 def index(request):
-    return render(request, "index.html")
+    form_type_select = DataTypeSelection()
+    data = {"form_type_select": form_type_select}
+    return render(request, "index.html", context=data)
+
+
+def selection(request):
+    form_data_select = DataSelection()
+    data = {"form_select": form_data_select}
+    return render(request, "index.html", context=data)
 
 
 def methods(request):
@@ -123,6 +131,7 @@ def drifter_info(request):
                                        "longitude": s.longitude})
 
             data = {"status": 1,
+                    "drifter_id": id_no,
                     "number": drifter.platform_number,
                     "serial": drifter.float_serial_no,
                     "sessions": sessions_found}
@@ -136,6 +145,8 @@ def drifter_info(request):
 
 def session_info(request):
     session_id = request.GET.get("session_id")
+    drifter_id = request.GET.get("drifter_id")
+    drifter_number = request.GET.get("drifter_number")
     try:
         session_this = Sessions.objects.get(id=session_id)
         measured_values = Measurements.objects.filter(session=session_this)[:]
@@ -157,7 +168,9 @@ def session_info(request):
                                 "moment": session_this.juld,
                                 "latitude": session_this.latitude,
                                 "longitude": session_this.longitude,
-                                "qc": session_this.position_qc},
+                                "qc": session_this.position_qc,
+                                "drifter_id": drifter_id,
+                                "drifter_number": drifter_number},
                     "count": len(measured_values),
                     "measurements": values_list}
         else:
@@ -166,7 +179,10 @@ def session_info(request):
                                 "moment": session_this.juld,
                                 "latitude": session_this.latitude,
                                 "longitude": session_this.longitude,
-                                "qc": session_this.position_qc},
+                                "qc": session_this.position_qc,
+                                "drifter_id": drifter_id,
+                                "drifter_number": drifter_number
+                                },
                     "count": 0}
 
 
@@ -223,16 +239,20 @@ def get_coordinates():
 
     coord = []
     sessions = Sessions.objects.in_bulk()
+    drifters = Drifters.objects.in_bulk()
     for s in sessions:
+
         coord.append({"moment": sessions[s].juld,
                       "latitude": sessions[s].latitude,
                       "longitude": sessions[s].longitude,
-                      "id": sessions[s].id})
+                      "session_id": sessions[s].id,
+                      "drifter_id": sessions[s].drifter_id,
+                      "drifter_number": drifters[sessions[s].drifter_id].platform_number})
 
     return coord
 
 
-def calculations(request):
+def sessions_all(request):
 
     # log = SysLog.objects.all()
     # log_count = log.count()
@@ -244,6 +264,12 @@ def calculations(request):
 
     # data = {"form": form, "log": log_history, "result": res}
     data = {"coordinates": res, "total": total}
+    return render(request, "argo/sessions_all.html", context=data)
+
+
+def calculation(request):
+    # counter = make_calculations()
+    data = {"message": 'none'}
     return render(request, "argo/test.html", context=data)
 
 

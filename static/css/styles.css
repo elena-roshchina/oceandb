@@ -47,6 +47,10 @@ a.menu:active {
   color: gold;
 }
 
+.myradio {
+    font-size: 9pt;
+}
+
 .footer {
     font-size: 9pt;
     font-family: 'Arial';

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Тестовые вычисления{% endblock title %}
+{% block header %}Серии измерений{% endblock header %}
+{% block content%}
+    {% if total != 0 %}
+        <p>Получено точек: {{ total }} </p>
+        <table cellpadding="5px">
+            <th>Drifter</th>
+            <th>Session id</th>
+            <th>Moment</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+        {% for c in coordinates %}
+            <tr>
+                <td><a  href="/drifter_info/?id={{ c.drifter_id }}">{{ c.drifter_number }}</a></td>
+                <td><a href="/session_info/?session_id={{ c.session_id }}&drifter_id={{ c.drifter_id }}&drifter_number={{ c.drifter_number }}">{{ c.session_id }}</a></td>
+                <td>{{ c.moment }}</td>
+                <td>{{ c.latitude}}</td>
+                <td>{{ c.longitude }}</td>
+            </tr>
+        {% endfor %}
+        </table>
+    {% endif %}
+{% endblock content %}

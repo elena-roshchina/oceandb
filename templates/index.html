@@ -3,5 +3,23 @@
 {% block header %}Выборка данных{% endblock header %}
 {% block content%}
     <p>Выбрать:</p>
+    <form method="GET" action="/selection/">
+        {% csrf_token %}
+    <div style="display: block; width: 300px">
+        <fieldset>
+            <legend>Тип данных</legend>
+                {% for radio in form_type_select.choice_field %}
+                    <div class="myradio">
+                        {{ radio }}
+                    </div>
+                {% endfor %}
+
+        </fieldset>
+    </div>
+
+        <p><input type="submit" value="Выбрать" ></p>
+
+    </form>
+
 
 {% endblock content %}

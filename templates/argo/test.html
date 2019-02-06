@@ -1,19 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Тестовые вычисления{% endblock title %}
-{% block header %}Серии измерений{% endblock header %}
-{% block content%}
-    {% if total != 0 %}
-        <p>Получено точек: {{ total }} </p>
-        <table>
-            <th>Latitude</th>
-            <th>Longitude</th>
-        {% for c in coordinates %}
-            <tr>
-                <td><a href="/session_info/?session_id={{ c.id }}">{{ c.moment }}</a></td>
-                <td>{{ c.latitude}}</td>
-                <td>{{ c.longitude }}</td>
-            </tr>
-        {% endfor %}
-        </table>
+{% block title %}Тест{% endblock title %}
+{% block header %}Тест{% endblock header %}
+{% block content %}
+    {% if message != 'none' %}
+        <p>Вычисления выполнены, <b>{{ message }}</b> записей обновлено.</p>
+        {% else %}
+        <p>Вычисления не выполнялись</p>
     {% endif %}
 {% endblock content %}

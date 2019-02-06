@@ -16,6 +16,7 @@
                 <th>Широта</th>
                 <th>Долгота</th>
                 <th>Качество координат</th>
+                <th>Номер буя</th>
             </tr>
             <tr>
                 <td>{{ session.id }}</td>
@@ -23,6 +24,7 @@
                 <td>{{ session.latitude }}</td>
                 <td>{{ session.longitude }}</td>
                 <td>{{ session.qc }}</td>
+                <td><a href="/drifter_info/?id={{ session.drifter_id }}">{{ session.drifter_number }}</a></td>
             </tr>
         </table>
         <p>Found records: {{ count }}</p>
