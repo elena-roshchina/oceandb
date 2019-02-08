@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Буй номер {{ number }}{% endblock title %}
+{% block header %}Буй номер {{ number }}{% endblock header %}
+{% block content%}
+    {% if status == 0 %}
+        <p>не найден</p>
+    {%  endif %}
+    {% if status == 2 %}
+        <p>сессий измерений не найдено</p>
+    {%  endif %}
+    {% if status == 1 %}
+        <p>Сeрийный номер: {{ serial }}</p>
+        <p>Серии измерений:</p>
+        <table>
+            <th>id</th>
+            <th>Момент</th>
+            <th>Широта</th>
+            <th>Долгота</th>
+        {% for s in sessions %}
+            <tr>
+                <td><a href="/session_info/?session_id={{ s.id }}&drifter_id={{ drifter_id }}&drifter_number={{ number }}">{{ s.id }}</a></td>
+                <td>{{ s.moment }}</td>
+                <td>{{ s.latitude }}</td>
+                <td>{{ s.longitude }}</td>
+            </tr>
+        {% endfor %}
+        </table>
+    {%  endif %}
+{% endblock content %}

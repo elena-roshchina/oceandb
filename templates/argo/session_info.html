@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Сессия ID {{ session.id }}{% endblock title %}
+{% block header %}Сессия ID {{ session.id }}{% endblock header %}
+{% block content%}
+    {% if status == 0 %}
+        <p>не найдена</p>
+    {%  endif %}
+    {% if status == 2 %}
+        <p> измерений не найдено</p>
+    {%  endif %}
+    {% if status == 1 %}
+        <table>
+            <tr>
+                <th>id</th>
+                <th>Момент</th>
+                <th>Широта</th>
+                <th>Долгота</th>
+                <th>Качество координат</th>
+                <th>Номер буя</th>
+            </tr>
+            <tr>
+                <td>{{ session.id }}</td>
+                <td>{{ session.moment }}</td>
+                <td>{{ session.latitude }}</td>
+                <td>{{ session.longitude }}</td>
+                <td>{{ session.qc }}</td>
+                <td><a href="/drifter_info/?id={{ session.drifter_id }}">{{ session.drifter_number }}</a></td>
+            </tr>
+        </table>
+        <p>Found records: {{ count }}</p>
+        {% if count > 0 %}
+            <table>
+            <tr>
+                <th>p</th>
+                <th>p QC</th>
+                <th>s</th>
+                <th>s QC</th>
+                <th>t</th>
+                <th>t QC</th>
+                <th>depth</th>
+                <th>density</th>
+                <th>svel</th>
+            </tr>
+
+            {% for m in measurements %}
+                <tr>
+                <td>{{ m.pressure }}</td>
+                <td>{{ m.pressure_qc }}</td>
+                <td>{{ m.salinity }}</td>
+                <td>{{ m.salinity_qc }}</td>
+                <td>{{ m.temperature }}</td>
+                <td>{{ m.temperature_qc }}</td>
+                <td>{{ m.depth }}</td>
+                <td>{{ m.density }}</td>
+                <td>{{ m.svelocity }}</td>
+                </tr>
+
+            {% endfor %}
+            </table>
+        {% endif %}
+    {%  endif %}
+{% endblock content %}

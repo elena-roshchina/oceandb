@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from netCDF4 import Dataset
@@ -6,39 +7,270 @@ import os
 
 from argo.argo_convertor import read_strings_with_full_value, read_char_with_full_value, read_datetime_with_full_value
 from oceandb.settings import ARGO_ARCHIEVE, STATIC_URL
-from .forms import UploadFileForm
-from .models import Drifters, Sessions, Measurements, SysLog
+from .forms import UploadFileForm, CalculateDensity, CalculateSoundVelocity, CalculateDepth, DataTypeSelection
+from .models import Drifters, Sessions, Measurements, SysLog, Storage
+from .functions import density, unesco_sound_velosity, calculate_depth
 from datetime import datetime, date, time, timedelta
 
 
-def index(request):
+DRIFTERS_COUNT = 'DRIFTERS'
+SESSIONS_COUNT = 'SESSIONS'
+MEASUREMENTS_COUNT = 'MEASUREMENTS'
+FIRST_DATE = 'FIRST_DATE'
+LAST_DATE = 'LAST_DATE'
 
-    return render(request, "index.html")
+
+def index(request):
+    form_type_select = DataTypeSelection()
+    data = {"form_type_select": form_type_select}
+    return render(request, "index.html", context=data)
+
+
+def selection(request):
+    form_data_select = DataSelection()
+    data = {"form_select": form_data_select}
+    return render(request, "index.html", context=data)
+
 
 def methods(request):
-    img = STATIC_URL + "images/under-construction.jpg"
-    return render(request, "argo/methods.html", {"path_to_img": img})
+    form_density = CalculateDensity()
+    form_svel = CalculateSoundVelocity()
+    form_depth = CalculateDepth()
+    data = {"svel_form": form_svel, "msg_svel": 'none',
+            "density_form": form_density, "msg": 'none',
+            "depth_form": form_depth, "msg_depth": 'none'}
+    return render(request, "argo/methods.html", context=data)
+
+
+def calc_density(request):
+
+    s = float(request.GET.get("salinity"))
+    t = float(request.GET.get("temperature"))
+    p = float(request.GET.get("pressure"))
+
+    d = density(s, t, p)
+
+    form_density = CalculateDensity()
+    form_svel = CalculateSoundVelocity()
+    form_depth = CalculateDepth()
+
+    data = {"svel_form": form_svel, "msg_svel": 'none',
+            "density_form": form_density, "msg": str(d),
+            "depth_form": form_depth, "msg_depth": 'none'}
+    return render(request, "argo/methods.html", context=data)
+
+
+def calc_svel(request):
+
+    s = float(request.GET.get("salinity"))
+    t = float(request.GET.get("temperature"))
+    p = float(request.GET.get("pressure"))
+
+    sv = unesco_sound_velosity(s, t, p)
+
+    form_density = CalculateDensity()
+    form_svel = CalculateSoundVelocity()
+    form_depth = CalculateDepth()
+    data = {"svel_form": form_svel, "msg_svel": str(sv),
+            "density_form": form_density, "msg": 'none',
+            "depth_form": form_depth, "msg_depth": 'none'}
+    return render(request, "argo/methods.html", context=data)
+
+
+def calc_depth(request):
+
+    lat = float(request.GET.get("latitude"))
+    p = float(request.GET.get("pressure"))
+
+    depth = calculate_depth(lat, p)
+    form_density = CalculateDensity()
+    form_svel = CalculateSoundVelocity()
+    form_depth = CalculateDepth()
+    data = {"svel_form": form_svel, "msg_svel": 'none',
+            "density_form": form_density, "msg": 'none',
+            "depth_form": form_depth, "msg_depth": str(depth)}
+    return render(request, "argo/methods.html", context=data)
+
 
 def description(request):
-    drifters_in_db = Drifters.objects.all()
-    sessions_in_db = Sessions.objects.all()
-    measurements_in_db = Measurements.objects.all()
-    first = sessions_in_db.order_by('juld').first().juld
-    last = sessions_in_db.order_by('juld').last().juld
+    drifters_in_db = Storage.objects.filter(comment=DRIFTERS_COUNT).first().value
+    sessions_in_db = Storage.objects.filter(comment=SESSIONS_COUNT).first().value
+    measurements_in_db = Storage.objects.filter(comment=MEASUREMENTS_COUNT).first().value
+    first = Storage.objects.filter(comment=FIRST_DATE).first().value[:10]
+    last = Storage.objects.filter(comment=LAST_DATE).first().value[:10]
 
-    first_latitude = sessions_in_db.order_by('latitude').first().latitude
-    last_latitude = sessions_in_db.order_by('latitude').last().latitude
-
-    first_longitude = sessions_in_db.order_by('longitude').first().longitude
-    last_longitude = sessions_in_db.order_by('longitude').last().longitude
-
-    data = {"drifter_count": drifters_in_db.count(),
-            "session_count": sessions_in_db.count(),
-            "measurements_count": measurements_in_db.count(),
-            "first": first, "last": last,
-            "first_latitude": first_latitude, "last_latitude": last_latitude,
-            "first_longitude": first_longitude, "last_longitude": last_longitude}
+    data = {"drifter_count": drifters_in_db,
+            "session_count": sessions_in_db,
+            "measurements_count": measurements_in_db,
+            "first": first, "last": last}
     return render(request, "argo/description.html", context=data)
+
+
+def drifters(request):
+    drifter_numbers = []
+    drifters_found = Drifters.objects.in_bulk()
+    for d in drifters_found:
+        drifter_numbers.append({"id": drifters_found[d].id,
+                                "drifter_num": int(drifters_found[d].platform_number)})
+    drifter_numbers.sort(key=lambda d: d['drifter_num'])
+    data = {"count": len(drifter_numbers), "drifters": drifter_numbers}
+    return render(request, "argo/drifters.html", context=data)
+
+
+def drifter_info(request):
+    id_no = request.GET.get("id")
+    try:
+        drifter = Drifters.objects.get(id=id_no)
+        dr_sessions = Sessions.objects.filter(drifter=drifter)[:]
+        if len(dr_sessions) != 0:
+            sessions_found = []
+            for s in dr_sessions:
+                sessions_found.append({"id": s.id,
+                                       "moment": s.juld,
+                                       "latitude": s.latitude,
+                                       "longitude": s.longitude})
+
+            data = {"status": 1,
+                    "drifter_id": id_no,
+                    "number": drifter.platform_number,
+                    "serial": drifter.float_serial_no,
+                    "sessions": sessions_found}
+        else:
+            data = {"status": 2, "number": drifter.platform_number}  # 2 - сессий нет для этого буя
+    except ObjectDoesNotExist:
+        data = {"status": 0, "number": id} # буй не найден
+
+    return render(request, "argo/drifter_info.html", context=data)
+
+
+def session_info(request):
+    session_id = request.GET.get("session_id")
+    drifter_id = request.GET.get("drifter_id")
+    drifter_number = request.GET.get("drifter_number")
+    try:
+        session_this = Sessions.objects.get(id=session_id)
+        measured_values = Measurements.objects.filter(session=session_this)[:]
+        if len(measured_values) != 0:
+            values_list = []
+            for m in measured_values:
+                values_list.append({"pressure": m.pres_adjusted,
+                                    "pressure_qc": m.pres_adjusted_qc,
+                                    "salinity": m.psal_adjusted,
+                                    "salinity_qc": m.psal_adjusted_qc,
+                                    "temperature": m.temp_adjusted,
+                                    "temperature_qc": m.temp_adjusted_qc,
+                                    "depth": m.depth,
+                                    "density": m.density,
+                                    "svelocity": m.sound_vel})
+            values_list.sort(key=lambda d: d['depth'])
+            data = {"status": 1,
+                    "session": {"id": session_this.id,
+                                "moment": session_this.juld,
+                                "latitude": session_this.latitude,
+                                "longitude": session_this.longitude,
+                                "qc": session_this.position_qc,
+                                "drifter_id": drifter_id,
+                                "drifter_number": drifter_number},
+                    "count": len(measured_values),
+                    "measurements": values_list}
+        else:
+            data = {"status": 1,
+                    "session": {"id": session_this.id,
+                                "moment": session_this.juld,
+                                "latitude": session_this.latitude,
+                                "longitude": session_this.longitude,
+                                "qc": session_this.position_qc,
+                                "drifter_id": drifter_id,
+                                "drifter_number": drifter_number
+                                },
+                    "count": 0}
+
+
+    except ObjectDoesNotExist:
+        data = {"status": 0, "session": {"id": session_id}}
+
+    return render(request, "argo/session_info.html", context=data)
+
+
+def make_calculations():
+    # Служебная функция для вычисления глубины, плотности и скорости звука и
+    # заполнения полей в БД начиная с номера i (здесь 393390)
+    # одноразовая - в дальнейшем поля будут заполняться при начальной загрузке записей из файла
+    # необходимо исправить - сначала выбирается сессия, потом по ее id - все измерения и
+    # действия совершать с массивом, а то неоптимально - широта требуется в каждой записи измерений,
+    # когда ее можно было получить один раз на всю серию
+    counter = 0
+    """
+    try:
+        i = 393390
+        while True:
+            measure = Measurements.objects.get(id=i)
+            msg = str(measure.id)
+            # _FillValue checking
+            no_fillvalue = measure.psal_adjusted != 99999 and measure.temp_adjusted != 99999
+
+            # Quality Control checking qc=4 should be ignored
+            pres_qc_valid = measure.pres_adjusted_qc != 4 and measure.pres_adjusted_qc != 9
+            psal_qc_valid = measure.psal_adjusted_qc != 4 and measure.psal_adjusted_qc != 9
+            temp_qc_valid = measure.temp_adjusted_qc != 4 and measure.temp_adjusted_qc != 9
+
+            # Values Control
+            values_valid = measure.pres_adjusted > 0.0 and measure.psal_adjusted > 0.0 and measure.temp_adjusted > -1.9
+
+            is_valid = no_fillvalue and pres_qc_valid and psal_qc_valid and temp_qc_valid and values_valid
+
+            if is_valid:
+                lat = Sessions.objects.get(id=measure.session_id).latitude
+                measure.depth = calculate_depth(abs(lat), measure.pres_adjusted)
+                measure.density = density(measure.psal_adjusted,
+                                          measure.temp_adjusted, measure.pres_adjusted)
+                measure.sound_vel = unesco_sound_velosity(measure.psal_adjusted,
+                                                          measure.temp_adjusted, measure.pres_adjusted)
+                measure.save()
+            i += 1
+            counter += 1
+    except ObjectDoesNotExist:
+        pass
+    """
+    return str(counter)
+
+
+def get_coordinates():
+
+    coord = []
+    sessions = Sessions.objects.in_bulk()
+    drifters = Drifters.objects.in_bulk()
+    for s in sessions:
+
+        coord.append({"moment": sessions[s].juld,
+                      "latitude": sessions[s].latitude,
+                      "longitude": sessions[s].longitude,
+                      "session_id": sessions[s].id,
+                      "drifter_id": sessions[s].drifter_id,
+                      "drifter_number": drifters[sessions[s].drifter_id].platform_number})
+
+    return coord
+
+
+def sessions_all(request):
+
+    # log = SysLog.objects.all()
+    # log_count = log.count()
+    # log_history = log[(log_count - 5):]
+    # form = UploadFileForm()
+
+    res = get_coordinates()
+    total = len(res)
+
+    # data = {"form": form, "log": log_history, "result": res}
+    data = {"coordinates": res, "total": total}
+    return render(request, "argo/sessions_all.html", context=data)
+
+
+def calculation(request):
+    # counter = make_calculations()
+    data = {"message": 'none'}
+    return render(request, "argo/test.html", context=data)
 
 
 def argo_upload(request):
@@ -63,11 +295,11 @@ def argo_upload(request):
         form = UploadFileForm()
         msg = "form is not valid"
         name = "None"
-        data = {"filename": name, "message": msg, "form": form, "log": log_history}
+        data = {"filename": name, "message": msg, "form": form, "log": log_history, "result": 'none'}
         return render(request, "argo/main.html", context=data)
     else:
         form = UploadFileForm()
-        data = {"form": form, "log": log_history}
+        data = {"form": form, "log": log_history, "result": 'none'}
         return render(request, "argo/main.html", context=data)
 
 
@@ -82,7 +314,7 @@ def handle_uploaded_file(f):
             message += ' log record number ' + str(log_record.id) + ' created'
         return message
 
-    save_path = ARGO_ARCHIEVE + '\\' + datetime.today().strftime("%Y%m%d") + '\\'
+    save_path = ARGO_ARCHIEVE
     time_start = datetime.now()
     message = ''
 
@@ -151,7 +383,7 @@ def handle_uploaded_file(f):
                                                                       juld_qc=juld_qc,
                                                                       juld_location=juld_location,
                                                                       latitude=latitude,
-                                                                      longtitude=longitude,
+                                                                      longitude=longitude,
                                                                       position_qc=position_qc)
             if session_created:
                 session_counter += 1
@@ -199,12 +431,48 @@ def handle_uploaded_file(f):
         log_message += 'N_LEVELS=' + str(dataset.dimensions['N_LEVELS'].size) + ', '
         log_message += str(drifter_counter) + 'drifters, ' + str(session_counter) + 'sessions, '
         log_message += str(measurements_counter) + 'measurements were successfully added '
-        log_record, log_record_created = SysLog.objects.get_or_create(file_name=filename,message=log_message)
+        log_record, log_record_created = SysLog.objects.get_or_create(moment_stamp=datetime.now(),
+                                                                      file_name=filename,
+                                                                      message=log_message)
 
         if log_record_created:
             message += ' log record number ' + str(log_record.id) + ' created'
+
+        # Update statistics
+        update_general_stat()
+
         dataset.close()
         return message
+
+
+def update_general_stat():
+
+    sessions_in_db = Sessions.objects.all()
+
+    first = sessions_in_db.order_by('juld').first().juld
+    last = sessions_in_db.order_by('juld').last().juld
+
+    drifters_stat, drifters_stat_created = Storage.objects.get_or_create(comment=DRIFTERS_COUNT)
+    drifters_stat.value = str(Drifters.objects.all().count())
+    drifters_stat.save(update_fields=["value"])
+
+    sessions_stat, sessions_stat_created = Storage.objects.get_or_create(comment=SESSIONS_COUNT)
+    sessions_stat.value = str(sessions_in_db.count())
+    sessions_stat.save(update_fields=["value"])
+
+    measurements_stat, measurements_stat_created = Storage.objects.get_or_create(comment=MEASUREMENTS_COUNT)
+    measurements_stat.value = str(Measurements.objects.all().count())
+    measurements_stat.save(update_fields=["value"])
+
+    dates_first_stat, dates_first_created = Storage.objects.get_or_create(comment=FIRST_DATE)
+    dates_first_stat.value = str(first)
+    dates_first_stat.save(update_fields=["value"])
+
+    dates_last_stat, dates_last_created = Storage.objects.get_or_create(comment=LAST_DATE)
+    dates_last_stat.value = str(last)
+    dates_last_stat.save(update_fields=["value"])
+
+    return 0
 
 
 

@@ -3,7 +3,76 @@
 {% block header %}Методики вычислений{% endblock header %}
 {% block content %}
 
-    <p>Page is under construction</p>
-    <img src="{{ path_to_img }}" alt="" >
+    <p>Расчет плотности морской воды согласно
+        <a href="http://docs.cntd.ru/document/1200105587" target="_blank">ГСССД 76-84</a> </p>
+    <p>Введите температуру (гр. Цельсия), соленость (PSU) и давление (дБар): </p>
+    <form method="GET" action="/density/">
+        {% csrf_token %}
+        <table>
+            <tr>
+                <td>
+                    <table>
+                        {{ density_form }}
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td align="center">
+                   <input type="submit" value="Вычислить" >
+                </td>
+            </tr>
+        </table>
+    </form>
+    {% if msg != 'none' %}
+        <p><b>Плотность морской воды:</b>{{ msg }} кг/м<sup>3</sup></p>
+    {% endif %}
 
+    <p>Расчет скорости звука в морской воду согласно алгоритму, приведенному в работе
+        <i>Fofonoff N.P. Algorithms for computation of fundamental properties of seawater / N.P. Fofonoff,
+            R.C. Millard Jr. – UNESCO , 1983. – 44. – 54 p.</i></p>
+    <p>Введите температуру (гр. Цельсия), соленость (PSU) и давление (дБар): </p>
+    <form method="GET" action="/svel/">
+        {% csrf_token %}
+        <table>
+            <tr>
+                <td>
+                    <table>
+                        {{ svel_form }}
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td align="center">
+                   <input type="submit" value="Вычислить" >
+                </td>
+            </tr>
+        </table>
+    </form>
+    {% if msg_svel != 'none' %}
+        <p><b>Скорость звука в морской воде:</b>{{ msg_svel }} м/c</p>
+    {% endif %}
+
+    <p>Расчет глубины
+        <i>П.А.Калашников. Первичная обработка гидрологической информации. Л. Гидрометиздат, 1985, с.47, 80, 113.</i></p>
+    <p>Введите широту в градусах и давление (дБар): </p>
+    <form method="GET" action="/depth/">
+        {% csrf_token %}
+        <table>
+            <tr>
+                <td>
+                    <table>
+                        {{ depth_form }}
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td align="center">
+                   <input type="submit" value="Вычислить" >
+                </td>
+            </tr>
+        </table>
+    </form>
+    {% if msg_depth != 'none' %}
+        <p><b>Глубина:</b>{{ msg_depth }} метров</p>
+    {% endif %}
 {% endblock content %}

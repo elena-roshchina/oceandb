@@ -47,6 +47,10 @@ a.menu:active {
   color: gold;
 }
 
+.myradio {
+    font-size: 9pt;
+}
+
 .footer {
     font-size: 9pt;
     font-family: 'Arial';
@@ -54,7 +58,7 @@ a.menu:active {
     padding-bottom: 5px;
     background-color: dodgerblue;
     padding-left: 15px;
-    color: white
+    color: white;
 }
 
 h1{color:navy;}

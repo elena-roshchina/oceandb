@@ -130,4 +130,4 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
 
-ARGO_ARCHIEVE = 'C:\\argo_storage\\'
+ARGO_ARCHIEVE = 'C:\\argo_storage\\uploaded\\'
