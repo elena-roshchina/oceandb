@@ -1,3 +1,5 @@
+import math
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -18,21 +20,83 @@ SESSIONS_COUNT = 'SESSIONS'
 MEASUREMENTS_COUNT = 'MEASUREMENTS'
 FIRST_DATE = 'FIRST_DATE'
 LAST_DATE = 'LAST_DATE'
+EARTH_RADIUS = 6371.116
 
 
 def index(request):
     form_type_select = DataTypeSelection()
-    data = {"form_type_select": form_type_select}
+    data = {"form_type_select": form_type_select, "msg": 'none', "count": 'none', "stations": 'none', "points": 'none'}
     return render(request, "index.html", context=data)
 
 
+# choice_field=1&enter_latitude=11.0&enter_longitude=11.0&radius=110.0
+# &moment_start=2016-12-01&moment_end=2017-12-25&seasons=0&horizon_minor=2&horizon_major=4
+
 def selection(request):
-    form_data_select = DataSelection()
-    data = {"form_select": form_data_select}
+    # выборка данных на index/html
+    msg = ''
+    form_data_select = DataTypeSelection()
+    data_kind = str(request.GET.get('choice_field'))
+    lat = float(request.GET.get('enter_latitude'))
+    long = float(request.GET.get('enter_longitude'))
+    coord_valid = abs(lat) < 88.9 and abs(long) < 179.999999
+    if not coord_valid:
+        msg = 'неверные координаты'
+
+    if data_kind == '1' and coord_valid:
+        start = request.GET.get('moment_start')
+        end = str(request.GET.get('moment_end'))
+
+        delta = float(request.GET.get('radius')) / 2 / EARTH_RADIUS * 180 / math.pi
+
+        long_1 = long - delta * math.cos(lat / 180 * math.pi)
+        long_2 = long + delta * math.cos(lat / 180 * math.pi)
+        if long_1 > long_2:
+            long_1, long_2 = long_2, long_1
+
+        lat_1 = lat - delta
+        lat_2 = lat + delta
+        if lat_1 > lat_2:
+            lat_1, lat_2 = lat_2, lat_1
+
+        ses = Sessions.objects.raw('select * from argo_sessions'
+                                   ' where latitude < %s and latitude > %s and'
+                                   ' longitude < %s and longitude > %s and'
+                                   ' juld between %s and %s', [lat_2, lat_1, long_2, long_1, start, end])[:]
+        count = len(ses)
+        stations = []
+        points = []
+        if count > 0:
+            #  Запишем полученные по запросу сессии (станции, места измерений)  в список словарей для передачи в html
+            drifters_found = Drifters.objects.in_bulk()
+            for s in ses:
+                stations.append({"moment": s.juld,
+                                 "latitude": s.latitude,
+                                 "longitude": s.longitude,
+                                 "session_id": s.id,
+                                 "drifter_id": s.drifter_id,
+                                 "drifter_number": drifters_found[s.drifter_id].platform_number})
+                points.append([EARTH_RADIUS * (s.longitude - long) * math.pi / 180 * math.cos(lat * math.pi / 180),
+                               EARTH_RADIUS * (s.latitude - lat) * math.pi / 180])
+
+        else:
+            pass
+        data = {"form_type_select": form_data_select,
+                "msg": str(data_kind) + ' - right choice!',
+                "count": count,
+                "stations": stations,
+                "points": points}
+    else:
+        data = {"form_type_select": form_data_select,
+                "msg": 'нет других данных или ' + msg,
+                "count": 'none',
+                "stations": 'none',
+                "points": 'none'}
     return render(request, "index.html", context=data)
 
 
 def methods(request):
+    # обработчик запроса к странице с методикой
     form_density = CalculateDensity()
     form_svel = CalculateSoundVelocity()
     form_depth = CalculateDepth()
@@ -43,7 +107,7 @@ def methods(request):
 
 
 def calc_density(request):
-
+    # обработчик формы вычисления плотности морской воды
     s = float(request.GET.get("salinity"))
     t = float(request.GET.get("temperature"))
     p = float(request.GET.get("pressure"))
@@ -61,7 +125,7 @@ def calc_density(request):
 
 
 def calc_svel(request):
-
+    # обработчик формы вычисления скорости звука
     s = float(request.GET.get("salinity"))
     t = float(request.GET.get("temperature"))
     p = float(request.GET.get("pressure"))
@@ -78,7 +142,7 @@ def calc_svel(request):
 
 
 def calc_depth(request):
-
+    # обработчик формы вычисления глубины
     lat = float(request.GET.get("latitude"))
     p = float(request.GET.get("pressure"))
 
@@ -93,6 +157,7 @@ def calc_depth(request):
 
 
 def description(request):
+    # обработчик запроса который выводи на страницу описания данных статистику по базе
     drifters_in_db = Storage.objects.filter(comment=DRIFTERS_COUNT).first().value
     sessions_in_db = Storage.objects.filter(comment=SESSIONS_COUNT).first().value
     measurements_in_db = Storage.objects.filter(comment=MEASUREMENTS_COUNT).first().value
@@ -107,6 +172,7 @@ def description(request):
 
 
 def drifters(request):
+    # вывод данных по всем буям в БД
     drifter_numbers = []
     drifters_found = Drifters.objects.in_bulk()
     for d in drifters_found:
@@ -118,6 +184,7 @@ def drifters(request):
 
 
 def drifter_info(request):
+    # вывод данных по id буя
     id_no = request.GET.get("id")
     try:
         drifter = Drifters.objects.get(id=id_no)
@@ -144,6 +211,7 @@ def drifter_info(request):
 
 
 def session_info(request):
+    # вывод данных по id одной станции (сессии) и ее измерений
     session_id = request.GET.get("session_id")
     drifter_id = request.GET.get("drifter_id")
     drifter_number = request.GET.get("drifter_number")
@@ -153,15 +221,17 @@ def session_info(request):
         if len(measured_values) != 0:
             values_list = []
             for m in measured_values:
-                values_list.append({"pressure": m.pres_adjusted,
-                                    "pressure_qc": m.pres_adjusted_qc,
-                                    "salinity": m.psal_adjusted,
-                                    "salinity_qc": m.psal_adjusted_qc,
-                                    "temperature": m.temp_adjusted,
-                                    "temperature_qc": m.temp_adjusted_qc,
-                                    "depth": m.depth,
-                                    "density": m.density,
-                                    "svelocity": m.sound_vel})
+                if m.depth is not None:
+                    values_list.append({"pressure": m.pres_adjusted,
+                                        "pressure_qc": m.pres_adjusted_qc,
+                                        "salinity": m.psal_adjusted,
+                                        "salinity_qc": m.psal_adjusted_qc,
+                                        "temperature": m.temp_adjusted,
+                                        "temperature_qc": m.temp_adjusted_qc,
+                                        "depth": m.depth,
+                                        "density": m.density,
+                                        "svelocity": m.sound_vel})
+
             values_list.sort(key=lambda d: d['depth'])
             data = {"status": 1,
                     "session": {"id": session_this.id,
@@ -184,7 +254,6 @@ def session_info(request):
                                 "drifter_number": drifter_number
                                 },
                     "count": 0}
-
 
     except ObjectDoesNotExist:
         data = {"status": 0, "session": {"id": session_id}}
@@ -253,27 +322,26 @@ def get_coordinates():
 
 
 def sessions_all(request):
-
-    # log = SysLog.objects.all()
-    # log_count = log.count()
-    # log_history = log[(log_count - 5):]
-    # form = UploadFileForm()
-
+    # вывод информации по всем станциям (сессиям)
     res = get_coordinates()
     total = len(res)
-
-    # data = {"form": form, "log": log_history, "result": res}
     data = {"coordinates": res, "total": total}
     return render(request, "argo/sessions_all.html", context=data)
 
 
 def calculation(request):
     # counter = make_calculations()
+    # служебная функция для разовых вычислений в БД
     data = {"message": 'none'}
     return render(request, "argo/test.html", context=data)
 
 
 def argo_upload(request):
+    ####################################################################################
+    # обработчик запроса загрузки данных с файла в базу данных
+    # проверка файла на принадлежгность к формату netCFD, записть файла в хранилище
+    # путь с архив определен в settings.py
+    ####################################################################################
     log = SysLog.objects.all()
     log_count = log.count()
     log_history = log[(log_count - 5):]
@@ -304,6 +372,13 @@ def argo_upload(request):
 
 
 def handle_uploaded_file(f):
+    ####################################################################################
+    # загрузка файла с диска
+    # чтение в dataset
+    # валидация данных
+    # запись в таблицы DRIFTERS SESSIONS MEASUREMENTS
+    # запись в таблицу SysLog о загрузке
+    ####################################################################################
     filename = str(f.name)
     log_message = ''
     if filename.split('.')[1] != "nc":
@@ -324,7 +399,7 @@ def handle_uploaded_file(f):
         except OSError:
             log_message += 'error occurs, a directory was not created'
             log_record, log_record_created = SysLog.objects.get_or_create(file_name=filename, message=log_message)
-            message = "Создать директорию %s не удалось." % save_path
+            message = "Создать директорию %s не удалось" % save_path
             if log_record_created:
                 message += ' log record number ' + str(log_record.id) + ' created'
             return message
@@ -340,8 +415,10 @@ def handle_uploaded_file(f):
         with open(save_path + f.name, 'wb') as destination:
             for chunk in f.chunks():
                 destination.write(chunk)
+        # Чтение всей структуры данных в NetCDF формате в объект dataset
         dataset = Dataset(save_path + filename)
-
+        # read_datetime_with_full_value - освобождает строку от служебных символов атрибута _FillValue
+        # чтение нульпункта дат
         reference_jd_date = read_datetime_with_full_value(dataset, 'REFERENCE_DATE_TIME')
 
         # Create or find record of Drifters table
@@ -349,7 +426,6 @@ def handle_uploaded_file(f):
         session_counter = 0
         measurements_counter = 0
 
-        # for i in range(0, dataset.dimensions['N_PROF'].size):
         for i in range(0, dataset.dimensions['N_PROF'].size):
             platform_num = read_strings_with_full_value(dataset, 'PLATFORM_NUMBER')[i]
             platform_ty = read_strings_with_full_value(dataset, 'PLATFORM_TYPE')[i]
@@ -388,8 +464,7 @@ def handle_uploaded_file(f):
             if session_created:
                 session_counter += 1
 
-
-            # Create table with measurements
+            # Record measurements
             # for j in range(0, dataset.dimensions['N_LEVELS'].size):
             for j in range(0, dataset.dimensions['N_LEVELS'].size):
                 if dataset.variables['PRES_ADJUSTED'][i].data[j] != dataset.variables['PRES_ADJUSTED']._FillValue:
@@ -403,20 +478,53 @@ def handle_uploaded_file(f):
                     temp_adj_qc = int(str(dataset.variables['TEMP_ADJUSTED_QC'][i][j])[2:3])
                     temp_adj_err = dataset.variables['TEMP_ADJUSTED_ERROR'][i].data[j]
 
-                    measure, measure_created = Measurements.objects.get_or_create(session=session,
-                                                                                  level_number=j,
-                                                                                  psal_adjusted=psal_adj,
-                                                                                  psal_adjusted_qc=psal_adj_qc,
-                                                                                  psal_adjusted_err=psal_adj_err,
-                                                                                  pres_adjusted=pres_adj,
-                                                                                  pres_adjusted_qc=pres_adj_qc,
-                                                                                  pres_adjusted_err=pres_adj_err,
-                                                                                  temp_adjusted=temp_adj,
-                                                                                  temp_adjusted_qc=temp_adj_qc,
-                                                                                  temp_adjusted_err=temp_adj_err)
-                    if measure_created:
-                        measurements_counter += 1
+                    # Data validation
+                    # В ARGO поле отсутствующего значения заполняется значением атрибута _FillValue
+                    # для полей нестроковых полей оно равно 99999
+                    # PRES_ADJUSTED, давление, уже проверено, поэтому проверяем все остальные параметры
+                    # _FillValue checking
+                    no_fillvalue = psal_adj != 99999 and temp_adj != 99999
 
+                    # Quality Control checking qc=4 or 9 should be ignored
+                    # флаги 4 и 9 это плохие или отсутствующие данные
+                    pres_qc_valid = pres_adj_qc != 4 and pres_adj_qc != 9
+                    psal_qc_valid = psal_adj_qc != 4 and psal_adj_qc != 9
+                    temp_qc_valid = temp_adj_qc != 4 and temp_adj_qc != 9
+
+                    # проверка соответствия величин допустимым диапазонам значений
+                    # согласно Международному уравнению состояния УС-80
+                    # 0 < p < 10000 decibar
+                    # 0 < s < 42 psu
+                    # -2 < t < 40
+                    # Values Control
+                    values_valid_min = pres_adj > 0.0 and psal_adj > 0.0 and temp_adj > -1.9
+                    values_valid_max = pres_adj < 10000.0 and psal_adj < 42.0 and temp_adj < 40.0
+                    values_valid = values_valid_min and values_valid_max
+
+                    is_valid = no_fillvalue and pres_qc_valid and psal_qc_valid and temp_qc_valid and values_valid
+                    if is_valid:
+                        # Вычисление глубины, плотности и скорости звука
+                        depth = calculate_depth(abs(latitude), pres_adj)
+                        water_density = density(psal_adj, temp_adj, pres_adj)
+                        sound_vel = unesco_sound_velosity(psal_adj, temp_adj, pres_adj)
+
+                        measure, measure_created = Measurements.objects.get_or_create(session=session,
+                                                                                      level_number=j,
+                                                                                      psal_adjusted=psal_adj,
+                                                                                      psal_adjusted_qc=psal_adj_qc,
+                                                                                      psal_adjusted_err=psal_adj_err,
+                                                                                      pres_adjusted=pres_adj,
+                                                                                      pres_adjusted_qc=pres_adj_qc,
+                                                                                      pres_adjusted_err=pres_adj_err,
+                                                                                      temp_adjusted=temp_adj,
+                                                                                      temp_adjusted_qc=temp_adj_qc,
+                                                                                      temp_adjusted_err=temp_adj_err,
+                                                                                      depth=depth,
+                                                                                      density=water_density,
+                                                                                      sound_vel=sound_vel)
+                        if measure_created:
+                            measurements_counter += 1
+        # message - вывод служебной информации на страницу загрузки
         message += ' ' + str(drifter_counter)
         message += ' - new drifters added, '
         message += str(session_counter)
@@ -446,6 +554,12 @@ def handle_uploaded_file(f):
 
 
 def update_general_stat():
+    ####################################################################################
+    # запись статистических данных о БД в таблицу Storage
+    # Принцип записи: "комментарий" -  значение
+    # комментарии для хранения информации о базе:
+    # DRIFTERS_COUNT, SESSIONS_COUNT, MEASUREMENTS_COUNT, FIRST_DATE, LAST_DATE
+    ####################################################################################
 
     sessions_in_db = Sessions.objects.all()
 

@@ -3,6 +3,7 @@
 # Плотность в диапазонах температур -2...40 °C, давлений 0...1000 бар и соленостей 0...42
 from fractions import Fraction
 import numpy as np
+import math
 
 
 def density_w(t):
@@ -193,3 +194,8 @@ for i in range(2):
                   "%6d" % pressure[k],
                   "%9.3f" % density(salinity[i], temperature[j], pressure[k]))
 """
+
+
+
+
+
