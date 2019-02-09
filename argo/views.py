@@ -87,9 +87,9 @@ def selection(request):
             #  Запишем полученные по запросу сессии (станции, места измерений)  в список словарей для передачи в html
             drifters_found = Drifters.objects.in_bulk()
             for s in ses:
-                stations.append({"moment": s.juld,
-                                 "latitude": s.latitude,
-                                 "longitude": s.longitude,
+                stations.append({"moment": str(s.juld)[:10],
+                                 "latitude": float("{0:.5f}".format(s.latitude)),
+                                 "longitude": float("{0:.5f}".format(s.longitude)),
                                  "session_id": s.id,
                                  "drifter_id": s.drifter_id,
                                  "drifter_number": drifters_found[s.drifter_id].platform_number})
@@ -101,21 +101,23 @@ def selection(request):
                                s.latitude])
                 # для данный станции надо получить список измерений
                 # это будет словарь с id сессии, моментом и списком точек [x,y]
-                prof_points = []
+
                 values = Measurements.objects.filter(session_id=s.id)
+                prof_points = []
                 for v in values:
                     if v.depth is not None:
                         prof_points.append([float("{0:.3f}".format(v.sound_vel)), float("{0:.3f}".format(v.depth))])
-                # Сортировка списка списков по второму полю - глубине
-                prof_points.sort(key=lambda i: i[1])
-                profiles.append({"prof_session": str(s.id),
-                                 "prof_date": str(s.juld)[:10],
-                                 "prof_points": prof_points})
+                if len(prof_points) > 0:
+                    # Сортировка списка списков по второму полю - глубине
+                    prof_points.sort(key=lambda i: i[1])
+                    profiles.append({"prof_session": str(s.id),
+                                     "prof_date": str(s.juld)[:10],
+                                     "prof_points": prof_points})
+                else:
+                    profiles = 'none'
 
-        else:
-            pass
         data = {"form_type_select": form_data_select,
-                "msg": str(data_kind) + ' - right choice!',
+                "msg": 'выбран источник данных - ARGO',
                 "count": count,
                 "stations": stations,
                 "points": points,

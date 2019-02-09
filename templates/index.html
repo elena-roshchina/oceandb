@@ -148,12 +148,12 @@
                 <script src="{% static "js/hidesmth.js" %}"></script>
                 Станции  <a href='#' onClick='toggleDisplay("31415")'>показать/скрыть</a></p>
                 <div id="31415" style="display: none">
-                <table cellpadding="5px">
-                    <th>Drifter</th>
-                    <th>Session id</th>
-                    <th>Moment</th>
-                    <th>Latitude</th>
-                    <th>Longitude</th>
+                <table cellpadding="2px" style="font-size: 9pt">
+                    <th>№ буя</th>
+                    <th>id</th>
+                    <th>дата</th>
+                    <th>&#966;</th>
+                    <th>&#955;</th>
                         {% for c in stations %}
                             <tr>
                                 <td><a  href="/drifter_info/?id={{ c.drifter_id }}">{{ c.drifter_number }}</a></td>
@@ -238,10 +238,6 @@
                     name: '{{ profiles.0.prof_date }}',
                     color: 'rgba(223, 83, 83, .5)',
                     data: {{ profiles.0.prof_points }}
-                }, {
-                    name: '{{ profiles.1.prof_date }}',
-                    color: 'rgba(223, 83, 83, .5)',
-                    data: {{ profiles.1.prof_points }}
                 }]
                 });
                 </script>

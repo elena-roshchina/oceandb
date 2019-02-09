@@ -37,7 +37,7 @@ class DataTypeSelection(forms.Form):
 
     enter_latitude = forms.FloatField(min_value=-88.9, max_value=88.9)
     enter_longitude = forms.FloatField(min_value=-179.99999999, max_value=179.99999999)
-    radius = forms.FloatField(min_value=10.0, max_value=500.0)
+    radius = forms.FloatField(min_value=10.0, max_value=600.0)
 
     moment_start = forms.DateField()
     moment_end = forms.DateField()
