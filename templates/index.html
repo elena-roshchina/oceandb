@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block title %}Выборка данных{% endblock title %}
-{% block header %}Выборка данных{% endblock header %}
 {% block content%}
     <table>
     <tr>
@@ -66,11 +65,11 @@
     </form>
         </td>
         <td valign="top">
-           <p><a href="/selection/?choice_field=1&enter_latitude=-10.5&enter_longitude=-10.5&radius=550&moment_start=2017-04-20&moment_end=2018-05-17&seasons=0&horizon_minor=0&horizon_major=2000">Тест по бую 3901880</a></p>
-           <p>результат</p>
+           <a href="/selection/?choice_field=1&enter_latitude=-10.5&enter_longitude=-10.5&radius=550&moment_start=2017-04-20&moment_end=2018-05-17&seasons=0&horizon_minor=0&horizon_major=2000">Тест по бую 3901880</a>:
+
 
             {% if count != 'none' %}
-                <p>Получено точек: {{ count }} </p>
+                Получено станций: {{ count }} <br><br>
                 {% load staticfiles %}
                 <script src="{% static "js/highcharts.js" %}"></script>
                 <script src="{% static "js/exporting.js" %}"></script>
@@ -78,70 +77,70 @@
                 <div id="container" style="border: 1px solid red; min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
 
                 <script>Highcharts.chart('container', {
-  chart: {
-    type: 'scatter',
-    zoomType: 'xy'
-  },
-  title: {
-    text: 'Станции'
-  },
-  subtitle: {
-    text: 'Source: ARGO'
-  },
-  xAxis: {
-    title: {
-      enabled: true,
-      text: 'km'
-    },
-    startOnTick: true,
-    endOnTick: true,
-    showLastLabel: true
-  },
-  yAxis: {
-    title: {
-      text: 'km'
-    }
-  },
-  legend: {
-    layout: 'vertical',
-    align: 'left',
-    verticalAlign: 'top',
-    x: 100,
-    y: 70,
-    floating: true,
-    backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF',
-    borderWidth: 1
-  },
-  plotOptions: {
-    scatter: {
-      marker: {
-        radius: 5,
-        states: {
-          hover: {
-            enabled: true,
-            lineColor: 'rgb(100,100,100)'
-          }
-        }
-      },
-      states: {
-        hover: {
-          marker: {
-            enabled: false
-          }
-        }
-      },
-      tooltip: {
-        headerFormat: '<b>{series.name}</b><br>',
-        pointFormat: '{point.x} km, {point.y} km'
-      }
-    }
-  },
-  series: [{
-    name: 'Станции',
-    color: 'rgba(223, 83, 83, .5)',
-    data: {{ points }}
-  }]
-});
+                chart: {
+                    type: 'scatter',
+                    zoomType: 'xy'
+                },
+                title: {
+                text: 'Станции'
+                },
+                subtitle: {
+                    text: 'Source: ARGO'
+                },
+                xAxis: {
+                    title: {
+                        enabled: true,
+                        text: 'долгота, гр'
+                    },
+                    startOnTick: true,
+                    endOnTick: true,
+                    showLastLabel: true
+                },
+                yAxis: {
+                    title: {
+                        text: 'широта, гр'
+                        }
+                    },
+                    legend: {
+                        layout: 'vertical',
+                        align: 'left',
+                        verticalAlign: 'top',
+                        x: 100,
+                        y: 70,
+                        floating: true,
+                        backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF',
+                        borderWidth: 1
+                    },
+                plotOptions: {
+                    scatter: {
+                        marker: {
+                            radius: 5,
+                            states: {
+                                hover: {
+                                    enabled: true,
+                                    lineColor: 'rgb(100,100,100)'
+                                }
+                            }
+                        },
+                        states: {
+                                hover: {
+                                marker: {
+                                 enabled: false
+                                }
+                            }
+                        },
+                        tooltip: {
+                            headerFormat: '<b>{series.name}</b><br>',
+                            pointFormat: '{point.x} deg, {point.y} deg'
+                        }
+                    }
+                },
+                series: [{
+                    name: 'Станции',
+                    color: 'rgba(223, 83, 83, .5)',
+                    data: {{ points }}
+                }]
+                });
                 </script>
 
 

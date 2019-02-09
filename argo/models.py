@@ -2,6 +2,8 @@ import datetime
 
 from django.db import models
 
+# Create your models here.
+
 
 class Drifters(models.Model):
     platform_number = models.CharField(max_length=8)
