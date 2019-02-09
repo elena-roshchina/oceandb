@@ -42,16 +42,28 @@ def selection(request):
     data_kind = str(request.GET.get('choice_field'))
     lat0 = float(request.GET.get('enter_latitude'))
     long0 = float(request.GET.get('enter_longitude'))
-    # form_data_select.enter_latitude = lat0
+    radius = float(request.GET.get('radius'))
+    start = request.GET.get('moment_start')
+    end = request.GET.get('moment_end')
+    seasons = request.GET.get('seasons')
+    horizon_minor = int(request.GET.get('horizon_minor'))
+    horizon_major = int(request.GET.get('horizon_major'))
+
+    form_data_select.fields["choice_field"].initial = data_kind
+    form_data_select.fields["enter_latitude"].initial = lat0
+    form_data_select.fields["enter_longitude"].initial = long0
+    form_data_select.fields["radius"].initial = radius
+    form_data_select.fields["moment_start"].initial = start
+    form_data_select.fields["moment_end"].initial = end
+    form_data_select.fields["seasons"].initial = seasons
+    form_data_select.fields["horizon_minor"].initial = horizon_minor
+    form_data_select.fields["horizon_major"].initial = horizon_major
+
     coord_valid = abs(lat0) < 88.9 and abs(long0) < 179.999999
     if not coord_valid:
         msg = 'неверные координаты'
-
     if data_kind == '1' and coord_valid:
-        start = request.GET.get('moment_start')
-        end = str(request.GET.get('moment_end'))
-
-        delta = float(request.GET.get('radius')) / 2 / EARTH_RADIUS * 180 / math.pi
+        delta = radius / 2 / EARTH_RADIUS * 180 / math.pi
 
         long_1 = long0 - delta * math.cos(lat0 / 180 * math.pi)
         long_2 = long0 + delta * math.cos(lat0 / 180 * math.pi)
@@ -93,11 +105,11 @@ def selection(request):
                 values = Measurements.objects.filter(session_id=s.id)
                 for v in values:
                     if v.depth is not None:
-                        prof_points.append([v.sound_vel, v.depth])
+                        prof_points.append([float("{0:.3f}".format(v.sound_vel)), float("{0:.3f}".format(v.depth))])
                 # Сортировка списка списков по второму полю - глубине
                 prof_points.sort(key=lambda i: i[1])
-                profiles.append({"prof_session": s.id,
-                                 "prof_date": s.juld[:10],
+                profiles.append({"prof_session": str(s.id),
+                                 "prof_date": str(s.juld)[:10],
                                  "prof_points": prof_points})
 
         else:
@@ -245,15 +257,15 @@ def session_info(request):
             values_list = []
             for m in measured_values:
                 if m.depth is not None:
-                    values_list.append({"pressure": m.pres_adjusted,
+                    values_list.append({"pressure": float("{0:.2f}".format(m.pres_adjusted)),
                                         "pressure_qc": m.pres_adjusted_qc,
-                                        "salinity": m.psal_adjusted,
+                                        "salinity": float("{0:.2f}".format(m.psal_adjusted)),
                                         "salinity_qc": m.psal_adjusted_qc,
-                                        "temperature": m.temp_adjusted,
+                                        "temperature": float("{0:.2f}".format(m.temp_adjusted)),
                                         "temperature_qc": m.temp_adjusted_qc,
-                                        "depth": m.depth,
-                                        "density": m.density,
-                                        "svelocity": m.sound_vel})
+                                        "depth": float("{0:.2f}".format(m.depth)),
+                                        "density": float("{0:.2f}".format(m.density)),
+                                        "svelocity": float("{0:.2f}".format(m.sound_vel))})
 
             values_list.sort(key=lambda d: d['depth'])
             data = {"status": 1,
