@@ -20,9 +20,8 @@
     {{ filename }}{{ message }}
     </p>
     <hr width="700px" align="left">
-    <h3>Log:</h3>
     {% if log.count > 0 %}
-    <p>{{ log.count }} последних загрузок:</p>
+    <h3>Последние загрузки:</h3>
     <table cellpadding="5px">
         <tr><th>Id</th><th>Момент</th><th>Файл</th><th>Комментарий</th></tr>
         {% for record in log %}
