@@ -35,16 +35,35 @@ def index(request):
 # choice_field=1&enter_latitude=11.0&enter_longitude=11.0&radius=110.0
 # &moment_start=2016-12-01&moment_end=2017-12-25&seasons=0&horizon_minor=2&horizon_major=4
 
+
 def selection(request):
-    # выборка данных на index/html
+    # выборка данных на index.html
     msg = ''
     form_data_select = DataTypeSelection()
     data_kind = str(request.GET.get('choice_field'))
     lat0 = float(request.GET.get('enter_latitude'))
     long0 = float(request.GET.get('enter_longitude'))
     radius = float(request.GET.get('radius'))
-    start = request.GET.get('moment_start')
-    end = request.GET.get('moment_end')
+    start = ''
+    end = ''
+
+    # date validation
+    date_valid = True
+    try:
+        start = datetime.strptime(request.GET.get('moment_start'), '%Y-%m-%d')
+        try:
+            end = datetime.strptime(request.GET.get('moment_end'), '%Y-%m-%d')
+            if start > end:
+                msg += ' некорректный период '
+                date_valid = False
+        except ValueError:
+            msg += ' неправильный формат даты'
+            date_valid = False
+    except ValueError:
+        msg += 'неправильный формат даты'
+        date_valid = False
+
+
     seasons = request.GET.get('seasons')
     horizon_minor = int(request.GET.get('horizon_minor'))
     horizon_major = int(request.GET.get('horizon_major'))
@@ -59,10 +78,7 @@ def selection(request):
     form_data_select.fields["horizon_minor"].initial = horizon_minor
     form_data_select.fields["horizon_major"].initial = horizon_major
 
-    coord_valid = abs(lat0) < 88.9 and abs(long0) < 179.999999
-    if not coord_valid:
-        msg = 'неверные координаты'
-    if data_kind == '1' and coord_valid:
+    if data_kind == '1' and date_valid:
         delta = radius / 2 / EARTH_RADIUS * 180 / math.pi
 
         long_1 = long0 - delta * math.cos(lat0 / 180 * math.pi)

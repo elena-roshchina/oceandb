@@ -144,7 +144,6 @@
                 </script>
 
 
-
                 <script src="{% static "js/hidesmth.js" %}"></script>
                 Станции  <a href='#' onClick='toggleDisplay("31415")'>показать/скрыть</a></p>
                 <div id="31415" style="display: none">
@@ -170,8 +169,8 @@
 
         </td>
         <td valign="top">
-            <p>Кривые скорости звука</p>
             {% if profiles != 'none' %}
+                <p>Профили скорости звука</p>
             <div id="chart" style="border: 1px solid red; min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
 
                 <script>Highcharts.chart('chart', {

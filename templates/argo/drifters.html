@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Информация о буйках{% endblock title %}
+{% block title %}Информация о буях{% endblock title %}
 {% block content %}
 
     {% if count != 0 %}
-        <p>Всего буйков: {{ count }} </p>
+        <p>Всего буев в БД: {{ count }} </p>
         <table cellspacing="5px" border="0">
         {% for d in drifters %}
             {% if forloop.counter0|get_digit:"1" == 0 %}
