@@ -1,15 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Описание данных{% endblock title %}
-{% block header %}Описание данных{% endblock header %}
 {% block content%}
-    <div style="text-align: right; padding-right: 15px; font-style: italic; color: dodgerblue; font-size: 9pt">
+
+    <p><b>Источник данных</b></p>
+    <p>
         These data were collected and made freely available by the International Argo Program
         and the national programs that contribute to it.  <br>
         (http://www.argo.ucsd.edu,  http://argo.jcommops.org).
         The Argo Program is part of the Global Ocean Observing System. <br>
         Argo (2000). Argo float data and metadata from Global Data Assembly Centre<br>
         (Argo GDAC). SEANOE. http://doi.org/10.17882/42182
-    </div>
+    </p>
     <p>База данных содержит:</p>
     <table border="0" cellspacing="2" cellpadding="10">
     <tr style="background-color: gainsboro"><th>Количество буев</th>
@@ -24,6 +25,387 @@
         <td>{{ first }} - {{ last }} </td>
     </tr>
     </table><br>
+    {% load staticfiles %}
+    <script src="{% static "js/hidesmth.js" %}"></script>
+
+    <p><b>Таблицы БД:</b> <a href='#' onClick='toggleDisplay("111")'>показать/скрыть</a></p>
+    <div id='111' style="display: none">
+    <table border="0" cellspacing="2" cellpadding="10">
+        <tr style="background-color: gainsboro">
+            <th>Таблицы</th>
+            <th>Информация</th>
+            <th>Поля</th>
+            <th>Ссылки</th>
+        </tr>
+        <tr>
+            <td>argo_drifters</td>
+            <td>Буи</td>
+            <td>
+                PLATFORM_NUMBER<br>
+                PLATFORM_TYPE (код)<br>
+                FLOAT_SERIAL_NO
+            </td>
+            <td><br>Тип по коду в Таб. 23</td>
+        </tr>
+        <tr>
+            <td>argo_sessions </td>
+            <td>Станции</td>
+            <td>Файл данных: source_file<br>
+                ID буя<br>
+                номер профиля в файле: n_prof<br>
+                Время: JULD, JULD_QC, JULD_LOCATION, <br>
+Координаты: LATITUDE, LONGITUDE, POSITION_QC <br>
+Способ измерения: VERTICAL_SAMPLING_SCHEME, DIRECTION <br>
+Способ представления данных: DATA_MODE,<br>
+Номер цикла: CYCLE_NUMBER,
+</td>
+<td> флаги качества [имя параметра]_QC - Таб.2<br>
+схема измерения - Таб. 16</td>
+        </tr>
+    <tr>
+        <td>argo_measurements</td>
+        <td>Измерения</td>
+        <td>ID станции<br>
+        уровень: level_number<br>
+        измерения, флаги качества, ошибки:<br>
+            PRES_ADJUSTED <br>
+PRES_ADJUSTED_QC <br>
+PRES_ADJUSTED_ERROR <br>
+TEMP_ADJUSTED <br>
+TEMP_ADJUSTED_QC <br>
+TEMP_ADJUSTED_ERROR <br>
+PSAL_ADJUSTED <br>
+PSAL_ADJUSTED_QC <br>
+PSAL_ADJUSTED_ERROR<br>
+            вычисленные характеристики:<br>
+            глубина: depth<br>
+            плотность воды: density<br>
+            скорость звука: sound_vel<br>
+        </td>
+        <td>флаги качества [имя параметра]_QC - Таб.2</td>
+    </tr>
+    </table>
+    </div>
+
+    <h3>Референсные таблицы ARGO</h3>
+    <p><b>Таблица 2 флагов качества измерений (QC_FLAG)</b>: <a href='#' onClick='toggleDisplay("222")'>показать/скрыть</a></p>
+    <div id='222' style="display: none">
+    <table border="0" cellspacing="2" cellpadding="10">
+        <tr style="background-color: gainsboro">
+            <th>Код</th>
+            <th>Описание</th>
+        </tr>
+        <tr>
+            <td>0</td>
+            <td>Оценка качества не выполнена</td>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td>Хорошие данные.
+            Проверка оперативных данных прошла успешно, откалиброванное значение статистически правдоподобно, получена расчетная величика ошибки.
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>Вероятно хорошие данные.
+            Сырыми (не откалиброванными) значениями пользоваться нельзя.</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>Плохие данные, которые (вероятно) удастся исправить.
+            Не использовать без дополнительной коррекции.</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>Плохие данные. Ничего не сделать.</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>Значение было отредактировано.</td>
+        </tr>
+        <tr>
+            <td>8</td>
+        <td>Значение получено расчетным путём (интерполировано, экстраполировано или т. п.)</td>
+        </tr>
+        <tr>
+            <td>9</td>
+            <td>Значение отсутствует.</td></tr>
+    </table>
+    </div>
+    <p><b>Таблица 2a флагов качества профилей</b>: <a href='#' onClick='toggleDisplay("333")'>показать/скрыть</a></p>
+
+    <div id='333' style="display: none">
+    <p>Здесь N означает долю (относительное число) в профиле «хороших» измерений, т.е. с флагом качества 1, 2, 5 или 8. Измерения с флагом качества 9 в общем количестве не учитываются. Все остальные флаги качества измерений считаются «плохими».</p>
+
+        <table border="0" cellspacing="2" cellpadding="10">
+        <tr style="background-color: gainsboro">
+            <th>
+            Код
+            </th>
+            <th>
+            Описание
+            </th>
+        </tr>
+        <tr>
+            <td> </td>
+            <td>Оценка качества не выполнена </td>
+        </tr>
+        <tr>
+            <td>A </td>
+            <td>N = 100%, все уровни профиля содержат хорошие данные </td>
+        </tr>
+        <tr>
+            <td>B </td>
+            <td>75% <= N < 100% </td>
+        </tr>
+        <tr>
+            <td>C </td>
+            <td>50% <= N < 75% </td>
+        </tr>
+        <tr>
+            <td>D </td>
+            <td>25% <= N < 50% </td>
+        </tr>
+        <tr>
+            <td>E </td>
+            <td>0% < N < 25% </td>
+        </tr>
+        <tr>
+            <td>F </td>
+            <td>N = 0%, все уровни профиля содержат плохие данные </td>
+        </tr>
+    </table>
+    </div>
+    <p><b>Таблица 16. Primary sampling:</b> <a href='#' onClick='toggleDisplay("444")'>показать/скрыть</a></p>
+    <div id='444' style="display: none">
+   <table border="0" cellspacing="2" cellpadding="10">
+  <tr valign=top style="background-color: gainsboro">
+    <td>Code FORMAT = name: nominal measurement type [full description]</td>
+    <td>N_PROF</td>
+    <td>Code Description</td>
+  </tr>
+  <tr valign=top>
+    <td>Primary sampling: averaged [description]<br>or<br>Primary sampling: discrete [description]<br>or<br>Primary sampling: mixed [description]</td>
+    <td>1</td>
+    <td>Primary CTD measurements and measurements from auxiliary sensors that are taken at the same pressure levels and with the same sampling method as the Primary CTD profile. For auxiliary sensor measurements it is not required that all pressure levels contain data.</td>
+  </tr>
+  <tr valign=top>
+    <td>Secondary sampling: averaged [description]<br>or<br>Secondary sampling: discrete [description]<br>or<br>Secondary sampling: mixed [description]</td>
+    <td>&gt;1</td>
+    <td>Excluding &ldquo;Primary sampling&rdquo;, this profile includes measurements that are taken at pressure levels different from the Primary CTD profile, or with sampling methods different from the Primary CTD profile. Measurements can be taken by the Primary CTD or by auxiliary sensors.</td>
+  </tr>
+  <tr valign=top>
+    <td>Near-surface sampling: averaged, pumped/unpumped [description]<br>or<br>Near-surface sampling: discrete, pumped/unpumped [description]<br>or<br>Near-surface sampling: mixed, pumped/unpumped [description]</td>
+    <td>&gt;1</td>
+    <td>This profile includes near-surface measurements that are focused on the top 5dbar of the sea surface. (For the purpose of cross-calibration, this profile can extend deeper than the top 5dbar so as to overlap with the Primary sampling profile.) These measurements are taken at pressure levels different from the Primary CTD profile, or with sampling methods different from the Primary CTD profile. If the Primary sampling profile measures above 5dbar in the same manner as deeper data, there is no need to place the near-surface data here.</td>
+  </tr>
+  <tr valign=top>
+    <td>Bounce sampling: averaged [description]<br>or<br>Bounce sampling: discrete [description]<br>or<br>Bounce sampling: mixed [description]</td>
+    <td>&gt;1</td>
+    <td>This scheme contains profiles that are collected on multiple rises/falls during a single cycle. The profiles are temporally offset from each other and/or the Primary sampling profile. They can be sampled with the Primary CTD or with auxiliary sensors.</td>
+  </tr>
+</table>
+    </div>
+    <p><b>Таблица 23. Типы буев.(PLATFORM_TYPE):</b> <a href='#' onClick='toggleDisplay("555")'>показать/скрыть</a></p>
+    <div id='555' style="display: none">
+    <table border="0" cellspacing="2" cellpadding="5">
+  <tr valign=top style="background-color: gainsboro">
+    <td><b>PLATFORM_TYPE</b></td>
+    <td><b>PLAFTORM_TYPE_KEY</b></td>
+    <td><b>IXIXIX (1770)</b></td>
+    <td><b>Manufacturer</b></td>
+    <td><b>Description</b></td>
+  </tr>
+  <tr valign=top>
+    <td>ALAMO</td>
+    <td>800</td>
+    <td>866 867 868</td>
+    <td>MRV</td>
+    <td>MRV/WHOI new float</td>
+  </tr>
+  <tr valign=top>
+    <td>APEX</td>
+    <td>1</td>
+    <td>845 846 847</td>
+    <td>WRC/TWR</td>
+    <td>Webb Research Corporation/Teledyne Webb APEX float</td>
+  </tr>
+  <tr valign=top>
+    <td>APEX_C</td>
+    <td>10</td>
+    <td><br></td>
+    <td><br></td>
+    <td>Not yet manufactured</td>
+  </tr>
+  <tr valign=top>
+    <td>APEX_D</td>
+    <td>20</td>
+    <td>849</td>
+    <td>TWR</td>
+    <td>Teledyne Webb deep profiling APEX float</td>
+  </tr>
+  <tr valign=top>
+    <td>APEX_EM</td>
+    <td>5</td>
+    <td>848</td>
+    <td>WRC/TWR</td>
+    <td>Webb Research Corporation/Teledyne Webb APEX ElectroMagnetic float (measures velocity and mixing)</td>
+  </tr>
+  <tr valign=top>
+    <td>ARVOR</td>
+    <td>102</td>
+    <td>844</td>
+    <td>NKE</td>
+    <td>NKE ARVOR float</td>
+  </tr>
+  <tr valign=top>
+    <td>ARVOR_C</td>
+    <td>110</td>
+    <td>837</td>
+    <td>NKE</td>
+    <td>Coastal ARVOR float</td>
+  </tr>
+  <tr valign=top>
+    <td>ARVOR_D</td>
+    <td>120</td>
+    <td>838</td>
+    <td>NKE</td>
+    <td>Deep profiling NKE ARVOR float</td>
+  </tr>
+  <tr valign=top>
+    <td>FLOAT</td>
+    <td>999</td>
+    <td><br></td>
+    <td><br></td>
+    <td>Generic value when unknown</td>
+  </tr>
+  <tr valign=top>
+    <td>ITP</td>
+    <td>901</td>
+    <td>901</td>
+    <td>WHOI</td>
+    <td>Ice Tethered Profiler (with modified WHOI moored profiler driven by a traction drive unit)</td>
+  </tr>
+  <tr valign=top>
+    <td>NAVIS_A</td>
+    <td>500</td>
+    <td>863</td>
+    <td>SBE</td>
+    <td>Seabird NAVIS float</td>
+  </tr>
+  <tr valign=top>
+    <td>NEMO</td>
+    <td>400</td>
+    <td>859 860 861</td>
+    <td>OPTIMARE</td>
+    <td>OPTIMARE NEMO float</td>
+  </tr>
+  <tr valign=top>
+    <td>NINJA</td>
+    <td>300</td>
+    <td>855 856 857 858</td>
+    <td>TSK</td>
+    <td>TSK NINJA float</td>
+  </tr>
+  <tr valign=top>
+    <td>NINJA_D</td>
+    <td>320</td>
+    <td>864</td>
+    <td>TSK</td>
+    <td>TSK NINJA deep float</td>
+  </tr>
+  <tr valign=top>
+    <td>NOVA</td>
+    <td>600</td>
+    <td>865</td>
+    <td>METOCEAN</td>
+    <td>METOCEAN NOVA float</td>
+  </tr>
+  <tr valign=top>
+    <td>PALACE</td>
+    <td>0</td>
+    <td>831</td>
+    <td>WRC</td>
+    <td>Webb Research Corporation &ndash; first Argo float model from them</td>
+  </tr>
+  <tr valign=top>
+    <td>POPS_NEMO</td>
+    <td>430</td>
+    <td>843</td>
+    <td>OPTIMARE</td>
+    <td>Polar Ocean Profiling System (with NEMO float)</td>
+  </tr>
+  <tr valign=top>
+    <td>POPS_PROVOR</td>
+    <td>130</td>
+    <td>843</td>
+    <td>METOCEAN (NKE)</td>
+    <td>Polar Ocean Profiling System (with PROVOR CTS-3 float)</td>
+  </tr>
+  <tr valign=top>
+    <td>PROVOR</td>
+    <td>101</td>
+    <td>840 841 842</td>
+    <td>MARTEC KANNAD NKE</td>
+    <td>PROVOR float sold by MARTEC or NKE</td>
+  </tr>
+  <tr valign=top>
+    <td>PROVOR_II</td>
+    <td>103</td>
+    <td>839</td>
+    <td>NKE</td>
+    <td>NKE dual board PROVOR float</td>
+  </tr>
+  <tr valign=top>
+    <td>PROVOR_III</td>
+    <td>104</td>
+    <td>?</td>
+    <td>NKE</td>
+    <td>NKE dual board PROVOR float new generation</td>
+  </tr>
+  <tr valign=top>
+    <td>PROVOR_MT</td>
+    <td>100</td>
+    <td>840 841 842</td>
+    <td>METOCEAN</td>
+    <td>Metocean PROVOR float</td>
+  </tr>
+  <tr valign=top>
+    <td>S2A</td>
+    <td>204</td>
+    <td>854</td>
+    <td>MRV</td>
+    <td>MRV SOLOII float</td>
+  </tr>
+  <tr valign=top>
+    <td>SOLO</td>
+    <td>200</td>
+    <td>850 851 852</td>
+    <td>SIO_IDG</td>
+    <td>Scripps Institution of Oceanography &ndash; Instrument Development Group SOLO float</td>
+  </tr>
+  <tr valign=top>
+    <td>SOLO_D</td>
+    <td>220</td>
+    <td>862</td>
+    <td>SIO_IDG</td>
+    <td>Scripps Institution of Oceanography &ndash; Instrument Development Group deep SOLO float</td>
+  </tr>
+  <tr valign=top>
+    <td>SOLO_II</td>
+    <td>202</td>
+    <td>853</td>
+    <td>SIO_IDG</td>
+    <td>Scripps Institution of Oceanography &ndash; Instrument Development Group SOLO-II float</td>
+  </tr>
+  <tr valign=top>
+    <td>SOLO_W</td>
+    <td>201</td>
+    <td>850 851 852</td>
+    <td>WHOI</td>
+    <td>Woods Hole Oceanographic Institute SOLO float</td>
+  </tr>
+</table>
+    </div><br>
 
 
 {% endblock content %}

@@ -1,25 +1,250 @@
 {% extends "base.html" %}
 {% block title %}Выборка данных{% endblock title %}
-{% block header %}Выборка данных{% endblock header %}
 {% block content%}
-    <p>Выбрать:</p>
-    <form method="GET" action="/selection/">
-        {% csrf_token %}
-    <div style="display: block; width: 300px">
+    <table>
+    <tr>
+        <td valign="top">
+           <form method="GET" action="/selection/">
+    <div style="display: block; width: 350px; padding-top: 0px">
+        <a href="/selection/?choice_field=1&enter_latitude=-10.5&enter_longitude=-10.5&radius=550&moment_start=2017-04-20&moment_end=2018-05-17&seasons=0&horizon_minor=0&horizon_major=2000">Тест по бую 3901880</a>:
+        <br>
+        <b>Введите параметры выборки:</b>
         <fieldset>
-            <legend>Тип данных</legend>
-                {% for radio in form_type_select.choice_field %}
+        <legend>Тип данных</legend>
+           {% for radio in form_type_select.choice_field %}
                     <div class="myradio">
                         {{ radio }}
                     </div>
                 {% endfor %}
-
         </fieldset>
     </div>
-
-        <p><input type="submit" value="Выбрать" ></p>
+    <div style="display: block; width: 350px">
+        <fieldset>
+            <legend>Участок акватории</legend>
+            <table>
+                <tr>
+                    <td>Широта центра:</td><td>{{ form_type_select.enter_latitude }} в гр.</td>
+                </tr>
+                <tr>
+                    <td>Долгота центра:</td><td>{{ form_type_select.enter_longitude }} в гр.</td>
+                </tr>
+                <tr>
+                    <td>Радиус:</td><td>{{ form_type_select.radius }} в км</td>
+                </tr>
+            </table>
+        </fieldset>
+    </div>
+    <div style="display: block; width: 350px">
+        <fieldset>
+            <legend>Период</legend>
+                От: {{ form_type_select.moment_start}} YYYY-MM-DD<br>
+                До: {{ form_type_select.moment_end }} YYYY-MM-DD<br>
+                Сезоны:<br>
+                <table>
+                    <tr>
+                        {% for s in form_type_select.seasons %}
+                            <td>
+                                {{ s }}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                </table>
+        </fieldset>
+    </div>
+    <div style="display: block; width: 350px">
+        <fieldset>
+            <legend>Горизонты</legend>
+                От: {{ form_type_select.horizon_minor }} <br>
+                До: {{ form_type_select.horizon_major }} <br>
+            только стандартные
+               {{ form_type_select.stand_horizons }}
+        </fieldset>
+    </div>
+        <p><input type="submit" value="Выбрать" >
+            {% if msg != 'none' %}
+            <b>{{ msg }}</b>
+            {% endif %}</p>
 
     </form>
+        </td>
+        <td valign="top">
+            {% if count != 'none' %}
+                <p>Получено станций: {{ count }}</p>
+                {% load staticfiles %}
+                <script src="{% static "js/highcharts.js" %}"></script>
+                <script src="{% static "js/exporting.js" %}"></script>
+                <script src="{% static "js/export-data.js" %}"></script>
+                <div id="container" style="border: 1px solid red; min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
+
+                <script>Highcharts.chart('container', {
+                chart: {
+                    type: 'scatter',
+                    zoomType: 'xy'
+                },
+                title: {
+                text: 'Станции'
+                },
+                subtitle: {
+                    text: 'Source: ARGO'
+                },
+                xAxis: {
+                    title: {
+                        enabled: true,
+                        text: 'долгота, гр'
+                    },
+                    startOnTick: true,
+                    endOnTick: true,
+                    showLastLabel: true
+                },
+                yAxis: {
+                    title: {
+                        text: 'широта, гр'
+                        }
+                    },
+                    legend: {
+                        layout: 'vertical',
+                        align: 'left',
+                        verticalAlign: 'top',
+                        x: 100,
+                        y: 70,
+                        floating: true,
+                        backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF',
+                        borderWidth: 1
+                    },
+                plotOptions: {
+                    scatter: {
+                        marker: {
+                            radius: 5,
+                            states: {
+                                hover: {
+                                    enabled: true,
+                                    lineColor: 'rgb(100,100,100)'
+                                }
+                            }
+                        },
+                        states: {
+                                hover: {
+                                marker: {
+                                 enabled: false
+                                }
+                            }
+                        },
+                        tooltip: {
+                            headerFormat: '<b>{series.name}</b><br>',
+                            pointFormat: '{point.x} deg, {point.y} deg'
+                        }
+                    }
+                },
+                series: [{
+                    name: 'Станции',
+                    color: 'rgba(223, 83, 83, .5)',
+                    data: {{ points }}
+                }]
+                });
+                </script>
+
+
+                <script src="{% static "js/hidesmth.js" %}"></script>
+                Станции  <a href='#' onClick='toggleDisplay("31415")'>показать/скрыть</a></p>
+                <div id="31415" style="display: none">
+                <table cellpadding="2px" style="font-size: 9pt">
+                    <th>№ буя</th>
+                    <th>id</th>
+                    <th>дата</th>
+                    <th>&#966;</th>
+                    <th>&#955;</th>
+                        {% for c in stations %}
+                            <tr>
+                                <td><a  href="/drifter_info/?id={{ c.drifter_id }}">{{ c.drifter_number }}</a></td>
+                                <td><a href="/session_info/?session_id={{ c.session_id }}&drifter_id={{ c.drifter_id }}&drifter_number={{ c.drifter_number }}">{{ c.session_id }}</a></td>
+                                <td>{{ c.moment }}</td>
+                                <td>{{ c.latitude}}</td>
+                                <td>{{ c.longitude }}</td>
+                            </tr>
+                        {% endfor %}
+                </table>
+                </div>
+            {% endif %}
+
+
+        </td>
+        <td valign="top">
+            {% if profiles != 'none' %}
+                <p>Профили скорости звука</p>
+            <div id="chart" style="border: 1px solid red; min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
+
+                <script>Highcharts.chart('chart', {
+                chart: {
+                    type: 'scatter',
+                    zoomType: 'xy'
+                },
+                title: {
+                text: 'Профили'
+                },
+                subtitle: {
+                    text: 'Source: ARGO'
+                },
+                xAxis: {
+                    title: {
+                        enabled: true,
+                        text: 'скорость звука, м/сек'
+                    },
+                    startOnTick: true,
+                    endOnTick: true,
+                    showLastLabel: true
+                },
+                yAxis: {
+                    reversed: true,
+                    title: {
+                        text: 'глубина, м'
+                        }
+                    },
+                    legend: {
+                        layout: 'vertical',
+                        align: 'right',
+                        verticalAlign: 'bottom',
+                        x: 100,
+                        y: 70,
+                        floating: true,
+                        backgroundColor: (Highcharts.theme && Highcharts.theme.legendBackgroundColor) || '#FFFFFF',
+                        borderWidth: 1
+                    },
+                plotOptions: {
+                    scatter: {
+                        marker: {
+                            radius: 1,
+                            states: {
+                                hover: {
+                                    enabled: true,
+                                    lineColor: 'rgb(100,100,100)'
+                                }
+                            }
+                        },
+                        states: {
+                                hover: {
+                                marker: {
+                                 enabled: false
+                                }
+                            }
+                        },
+                        tooltip: {
+                            headerFormat: '<b>{series.name}</b><br>',
+                            pointFormat: '{point.x} м/сек, {point.y} м'
+                        }
+                    }
+                },
+                series: [{
+                    name: '{{ profiles.0.prof_date }}',
+                    color: 'rgba(223, 83, 83, .5)',
+                    data: {{ profiles.0.prof_points }}
+                }]
+                });
+                </script>
+            {% endif %}
+        </td>
+    </tr>
+    </table>
+
 
 
 {% endblock content %}

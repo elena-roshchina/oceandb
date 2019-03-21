@@ -1,8 +1,13 @@
 # Рассчеты параметров морской воды по
 # ГСССД 76-84 Таблицы стандартных справочных данных. Морская вода.
 # Плотность в диапазонах температур -2...40 °C, давлений 0...1000 бар и соленостей 0...42
+import datetime
+from datetime import datetime, date, time, timedelta
 from fractions import Fraction
 import numpy as np
+import math
+
+print(10)
 
 
 def density_w(t):
@@ -193,3 +198,10 @@ for i in range(2):
                   "%6d" % pressure[k],
                   "%9.3f" % density(salinity[i], temperature[j], pressure[k]))
 """
+
+
+
+
+
+
+
